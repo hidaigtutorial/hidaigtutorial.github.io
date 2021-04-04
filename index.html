@@ -66,7 +66,7 @@
 	   });
     });
 	function render() {
-		let n = pdf.numPages;
+		let n = myState.pdf.numPages;
 		for(var i=n; i>0; i--) {
 			myState.pdf.getPage(i).then((page) => {
 				var canvas = document.getElementById("pdf_renderer" + (i).toString());
