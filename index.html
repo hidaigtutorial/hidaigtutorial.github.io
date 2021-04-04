@@ -15,16 +15,14 @@
 <body style="background-color: lightskyblue">
 	<div style="text-align: center">
 	<div id="navigation_controls" style="display: inline-block">
-            <button id="go_previous">Previous</button>
-            <input id="current_page" value="1" type="number"/>
-            <button id="go_next">Next</button>
+            	<button id="go_next">הבא</button>
+		<button id="go_previous">הקודם</button>
         </div>
-	</div>
- 
-        <div id="zoom_controls" style="margin: auto">  
+	<div id="zoom_controls" style="display: inline-block">  
             <button id="zoom_in">+</button>
             <button id="zoom_out">-</button>
         </div>
+	</div>
 <div id="flipbook" style="margin: auto">
     <div id="clone">
         <canvas id="pdf_renderer0"></canvas>
@@ -85,10 +83,10 @@
 		}
 	}
 	
-	document.getElementById('קודם').addEventListener('click', (e) => {
+	document.getElementById('go_previous').addEventListener('click', (e) => {
 		$("#flipbook").turn("next");
 	});
-	document.getElementById('הבא').addEventListener('click', (e) => {
+	document.getElementById('go_next').addEventListener('click', (e) => {
 		$("#flipbook").turn("previous");
 	});
 	document.getElementById('zoom_in').addEventListener('click', (e) => {
