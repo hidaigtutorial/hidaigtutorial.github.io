@@ -68,7 +68,7 @@
     });
 	function render() {
 		for(var i=1; i<(n+1); i++) {
-			let n = pdf.numPages;
+			let n = myState.pdf.numPages;
 			myState.pdf.getPage((n+1-i)).then((page) => {
 				var canvas = document.getElementById("pdf_renderer" + (n+1-i).toString());
 				var ctx = canvas.getContext('2d');
