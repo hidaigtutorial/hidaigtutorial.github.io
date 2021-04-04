@@ -37,6 +37,7 @@
         }
    let n = 5;
    pdfjsLib.getDocument('present2.pdf').then(async function(pdf) {
+	myState.pdf = pdf;
        let n = pdf.numPages;
        for(var i=1; i<(n+1); i++) {
         $("#clone").clone().appendTo("#flipbook" )
@@ -67,20 +68,39 @@
             page: n
 	   });
     });
-	document.getElementById('go_previous').addEventListener('click', (e) => {
-		$("#flipbook").turn("previous");
-	});
-	document.getElementById('go_next').addEventListener('click', (e) => {
+	function render() {
+		for(var i=1; i<(n+1); i++) {
+			let n = pdf.numPages;
+			myState.pdf.getPage((n+1-i)).then((page) => {
+				var canvas = document.getElementById("pdf_renderer" + (n+1-i).toString());
+				var ctx = canvas.getContext('2d');
+				var viewport = page.getViewport(myState.zoom);
+				canvas.width = viewport.width;
+				canvas.height = viewport.height;
+				page.render({
+					canvasContext: ctx,
+					viewport: viewport
+				});
+			});
+		}
+	}
+	
+	document.getElementById('קודם').addEventListener('click', (e) => {
 		$("#flipbook").turn("next");
+	});
+	document.getElementById('הבא').addEventListener('click', (e) => {
+		$("#flipbook").turn("previous");
 	});
 	document.getElementById('zoom_in').addEventListener('click', (e) => {
             myState.zoom += 0.5;
             $("#flipbook").turn("zoom", myState.zoom);
+	    render();
         });
  
         document.getElementById('zoom_out').addEventListener('click', (e) => {
             myState.zoom -= 0.5;
             $("#flipbook").turn("zoom", myState.zoom);
+            render();
         });
 </script>
 </body>
