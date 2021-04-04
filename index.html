@@ -13,6 +13,16 @@
     </style>
 </head>
 <body style="background-color: lightskyblue">
+	<div id="navigation_controls">
+            <button id="go_previous">Previous</button>
+            <input id="current_page" value="1" type="number"/>
+            <button id="go_next">Next</button>
+        </div>
+ 
+        <div id="zoom_controls">  
+            <button id="zoom_in">+</button>
+            <button id="zoom_out">-</button>
+        </div>
 <div id="flipbook" style="margin: auto">
     <div id="clone">
         <canvas id="pdf_renderer0"></canvas>
@@ -20,7 +30,8 @@
 </div>
 <script>
    var myState = {
-            pdf: null
+            pdf: null,
+	    zoom: 1
         }
    let n = 5;
    pdfjsLib.getDocument('present2.pdf').then(async function(pdf) {
@@ -54,6 +65,21 @@
             page: n
 	   });
     });
+	document.getElementById('go_previous').addEventListener('click', (e) => {
+		$("#flipbook").turn("previous");
+	}
+	document.getElementById('go_next').addEventListener('click', (e) => {
+		$("#flipbook").turn(next");
+	}
+	document.getElementById('zoom_in').addEventListener('click', (e) => {
+            myState.zoom += 0.5;
+            $("#flipbook").turn("zoom", 0.5);
+        });
+ 
+        document.getElementById('zoom_out').addEventListener('click', (e) => {
+            myState.zoom -= 0.5;
+            $("#flipbook").turn("zoom", 0.5);
+        });
 </script>
 </body>
 </html>
