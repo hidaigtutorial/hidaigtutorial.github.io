@@ -65,7 +65,7 @@
             page: n
 	   });
     });
-	function render() {
+	async function render() {
 		let n = myState.pdf.numPages;
 		for(var i=n; i>0; i--) {
 			await myState.pdf.getPage(i).then((page) => {
