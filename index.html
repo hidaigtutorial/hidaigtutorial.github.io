@@ -115,13 +115,13 @@ margin: 0.4em auto;
 		$("#flipbook").turn("previous");
 	});
 	document.getElementById('zoom_in').addEventListener('click', (e) => {
-            myState.zoom *= 1.1;
+            myState.zoom *= 1.2;
             $("#flipbook").turn("zoom", myState.zoom);
 	    render();
         });
  
         document.getElementById('zoom_out').addEventListener('click', (e) => {
-            myState.zoom /= 1.1;
+            myState.zoom /= 1.2;
             $("#flipbook").turn("zoom", myState.zoom);
             render();
         });
