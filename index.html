@@ -33,7 +33,6 @@
             pdf: null,
 	    zoom: 1
         }
-   let n = 5;
    pdfjsLib.getDocument('present2.pdf').then(async function(pdf) {
 	myState.pdf = pdf;
        let n = pdf.numPages;
@@ -67,8 +66,8 @@
 	   });
     });
 	function render() {
+		let n = pdf.numPages;
 		for(var i=n; i>0; i--) {
-			let n = myState.pdf.numPages;
 			myState.pdf.getPage(i).then((page) => {
 				var canvas = document.getElementById("pdf_renderer" + (i).toString());
 				if (canvas) {
