@@ -10,7 +10,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.0.943/pdf.min.js">
     </script>
     <style>
-button {
+.button {
  display: inline-block;
  padding: 0.5em 3em;
  border: 0.16em solid #FFFFFF;
@@ -24,16 +24,16 @@ button {
  text-align: center;
  transition: all 0.15s;
 }
-button:hover{
+.button:hover{
  color: #DDDDDD;
  border-color: #DDDDDD;
 }
-button:active{
+.button:active{
  color: #BBBBBB;
  border-color: #BBBBBB;
 }
 @media all and (max-width: 30em){
- button{
+ .button{
   display: block;
   margin: 0.4em auto;
  }
@@ -43,12 +43,12 @@ button:active{
 <body style="background-color: lightskyblue">
 	<div style="text-align: center">
 	<div id="zoom_controls" style="display: inline-block">  
-            	<button id="zoom_out">-</button>
-		<button id="zoom_in">+</button>
+            	<button class="button" id="zoom_out">-</button>
+		<button class="button" id="zoom_in">+</button>
         </div>
 	<div id="navigation_controls" style="display: inline-block">
-            	<button id="go_next">הבא</button>
-		<button id="go_previous">הקודם</button>
+            	<button class="button" id="go_next">הבא</button>
+		<button class="button" id="go_previous">הקודם</button>
         </div>
 	</div>
 <div id="flipbook" style="margin: auto">
