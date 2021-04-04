@@ -96,22 +96,26 @@ margin: 0.4em auto;
 				if (canvas) {
 					var ctx = canvas.getContext('2d');
 					var viewport = page.getViewport(myState.zoom);
-					canvas.width = viewport.width;
-					canvas.height = viewport.height;
-					
-					page.render({
-						canvasContext: ctx,
-						viewport: viewport
-					});
+					if (canvas.width !== viewport.width) {
+						canvas.width = viewport.width;
+						canvas.height = viewport.height;
+						
+						page.render({
+							canvasContext: ctx,
+							viewport: viewport
+						});
+					}
 				}
 			});
 		}
 	}
 	
 	document.getElementById('go_previous').addEventListener('click', (e) => {
+		render()
 		$("#flipbook").turn("next");
 	});
 	document.getElementById('go_next').addEventListener('click', (e) => {
+		render()
 		$("#flipbook").turn("previous");
 	});
 	document.getElementById('zoom_in').addEventListener('click', (e) => {
