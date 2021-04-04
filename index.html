@@ -37,13 +37,13 @@
    pdfjsLib.getDocument('present2.pdf').then(async function(pdf) {
 	myState.pdf = pdf;
        let n = pdf.numPages;
-       for(var i=1; i<(n+1); i++) {
+       for(var i=n; i>0; i--) {
         $("#clone").clone().appendTo("#flipbook" )
-        $("#flipbook").children()[i].id = "div" + (n+1-i).toString()
-        $("#flipbook").children()[i].children[0].id = "pdf_renderer" + (n+1-i).toString()
-       await pdf.getPage((n+1-i)).then((page) => {
+        $("#flipbook").children()[n-i+1].id = "div" + (i).toString()
+        $("#flipbook").children()[n-i+1].children[0].id = "pdf_renderer" + (i).toString()
+       await pdf.getPage(i).then((page) => {
            
-               var canvas = document.getElementById("pdf_renderer" + (n+1-i).toString());
+               var canvas = document.getElementById("pdf_renderer" + (i).toString());
                 var ctx = canvas.getContext('2d');
       
                 var viewport = page.getViewport(1);
@@ -67,10 +67,10 @@
 	   });
     });
 	function render() {
-		for(var i=1; i<(n+1); i++) {
+		for(var i=n; i>0; i--) {
 			let n = myState.pdf.numPages;
-			myState.pdf.getPage((n+1-i)).then((page) => {
-				var canvas = document.getElementById("pdf_renderer" + (n+1-i).toString());
+			myState.pdf.getPage((i)).then((page) => {
+				var canvas = document.getElementById("pdf_renderer" + (i).toString());
 				var ctx = canvas.getContext('2d');
 				var viewport = page.getViewport(myState.zoom);
 				canvas.width = viewport.width;
