@@ -67,15 +67,18 @@
     });
 	function render() {
 		let n = myState.pdf.numPages;
+		console.log(n)
 		for(var i=n; i>0; i--) {
+			console.log(i)
 			myState.pdf.getPage(i).then((page) => {
 				var canvas = document.getElementById("pdf_renderer" + (i).toString());
+				console.log(canvas)
 				if (canvas) {
 					var ctx = canvas.getContext('2d');
 					var viewport = page.getViewport(myState.zoom);
 					canvas.width = viewport.width;
 					canvas.height = viewport.height;
-					console.log(canvas)
+					
 					page.render({
 						canvasContext: ctx,
 						viewport: viewport
@@ -92,13 +95,13 @@
 		$("#flipbook").turn("previous");
 	});
 	document.getElementById('zoom_in').addEventListener('click', (e) => {
-            myState.zoom += 0.5;
+            myState.zoom *= 1.1;
             $("#flipbook").turn("zoom", myState.zoom);
 	    render();
         });
  
         document.getElementById('zoom_out').addEventListener('click', (e) => {
-            myState.zoom -= 0.5;
+            myState.zoom /= 1.1;
             $("#flipbook").turn("zoom", myState.zoom);
             render();
         });
