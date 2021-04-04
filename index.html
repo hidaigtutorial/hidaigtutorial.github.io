@@ -69,7 +69,7 @@
 		let n = myState.pdf.numPages;
 		console.log(n)
 		for(var i=n; i>0; i--) {
-			myState.pdf.getPage(i).then((page) => {
+			await myState.pdf.getPage(i).then((page) => {
 				console.log(i)
 				var canvas = document.getElementById("pdf_renderer" + (i).toString());
 				console.log(canvas)
