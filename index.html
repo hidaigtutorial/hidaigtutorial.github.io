@@ -33,15 +33,13 @@ border-color: #BBBBBB;
 </style>
 </head>
 <body style="background-color: lightskyblue">
-	<div style="text-align: center">
-	<div id="zoom_controls" style="display: block; width: 100vw; height: 4em; user-select: none; position: fixed; top: calc(100vh - 4em); background-color: lightskyblue">  
+	<div id="zoom_controls" style="text-align: center; display: block; width: 100vw; height: 4em; user-select: none; position: fixed; z-index: 1; background-color: lightskyblue">  
             	<button class="button" id="zoom_out">-</button>
 		<button class="button" id="zoom_in">+</button>
             	<button class="button" id="go_next">הבא</button>
 		<button class="button" id="go_previous">הקודם</button>
-        </div>
-	</div><br><br>
-<div id="flipbook" style="margin: auto">
+	</div><br>
+<div id="flipbook" style="margin: 4em auto 2em">
     <div id="clone">
         <canvas id="pdf_renderer0"></canvas>
     </div>
