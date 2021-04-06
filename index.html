@@ -13,39 +13,34 @@
 display: inline-block;
 padding: 0.1em 0.5em;
 border: 0.16em solid #FFFFFF;
-margin: 1em 0.3em 1em 0em;
+margin: 1em 0.1em;
 box-sizing: border-box;
 text-decoration: none;
-text-transform: uppercase;
-font-family: 'Roboto',sans-serif;
-font-weight: 400;
 color: #FFFFFF;
 text-align: center;
 transition: all 0.15s;
 background: none;
+outline: none;
 }
 .button:hover{
 color: #DDDDDD;
 border-color: #DDDDDD;
 }
-@media all and (max-width: 30em){
-.button{
-display: block;
-margin: 0.4em auto;
+.button:active{
+color: #BBBBBB;
+border-color: #BBBBBB;
 }
-}</style>
+</style>
 </head>
 <body style="background-color: lightskyblue">
 	<div style="text-align: center">
-	<div id="zoom_controls" style="display: inline-block">  
+	<div id="zoom_controls" style="display: block; width: 100vw; height: 4em; user-select: none; position: fixed; top: calc(100vh - 4em); background-color: lightskyblue">  
             	<button class="button" id="zoom_out">-</button>
 		<button class="button" id="zoom_in">+</button>
-        </div>
-	<div id="navigation_controls" style="display: inline-block">
             	<button class="button" id="go_next">הבא</button>
 		<button class="button" id="go_previous">הקודם</button>
         </div>
-	</div>
+	</div><br><br>
 <div id="flipbook" style="margin: auto">
     <div id="clone">
         <canvas id="pdf_renderer0"></canvas>
@@ -56,6 +51,7 @@ margin: 0.4em auto;
             pdf: null,
 	    zoom: 1
         }
+   $("#flipbook").hide()
    pdfjsLib.getDocument('present2.pdf').then(async function(pdf) {
 	myState.pdf = pdf;
        let n = pdf.numPages;
@@ -80,6 +76,7 @@ margin: 0.4em auto;
             });
        }
        $("#flipbook").children()[0].remove()
+       $("#flipbook").show()
        	$("#flipbook").turn({
             width: 1186,
             height: 843,
