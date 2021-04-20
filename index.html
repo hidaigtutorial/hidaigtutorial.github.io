@@ -98,7 +98,26 @@ border-color: #BBBBBB;
                 page.render({
                     canvasContext: ctx,
                     viewport: viewport
-                });
+                }).then(function() {
+						    return page.getAnnotations();
+						}).then(function(annotationData) {
+							console.log(annotationData)
+						    // Canvas offset
+						    var canvas_offset = {
+							    top: canvas.offsetHeight,
+							    left: canvas.offsetWidth
+						    }
+						    // Assign CSS to the text-layer element
+						    $("#annotation-layer").css({ left: canvas_offset.left + 'px', top: canvas_offset.top + 'px', height: canvas.height + 'px', width: canvas.width + 'px' });
+
+						    // Pass the data to the method for rendering of text over the pdf canvas.
+						    pdfjsLib.AnnotationLayer.render({
+							viewport: viewport.clone({ dontFlip: true }),
+							div: $("#annotation-layer"),
+							annotations: annotationData,
+							page: page
+						    });
+						});
             });
        }
        $("#flipbook").children()[0].remove()
@@ -126,25 +145,6 @@ border-color: #BBBBBB;
 						page.render({
 							canvasContext: ctx,
 							viewport: viewport
-						}).then(function() {
-						    return page.getAnnotations();
-						}).then(function(annotationData) {
-							console.log(annotationData)
-						    // Canvas offset
-						    var canvas_offset = {
-							    top: canvas.offsetHeight,
-							    left: canvas.offsetWidth
-						    }
-						    // Assign CSS to the text-layer element
-						    $("#annotation-layer").css({ left: canvas_offset.left + 'px', top: canvas_offset.top + 'px', height: canvas.height + 'px', width: canvas.width + 'px' });
-
-						    // Pass the data to the method for rendering of text over the pdf canvas.
-						    pdfjsLib.AnnotationLayer.render({
-							viewport: viewport.clone({ dontFlip: true }),
-							div: $("#annotation-layer"),
-							annotations: annotationData,
-							page: page
-						    });
 						});
 
 					}
