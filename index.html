@@ -114,7 +114,7 @@ border-color: #BBBBBB;
 
 						    // Pass the data to the method for rendering of text over the pdf canvas.
 						    pdfjsLib.AnnotationLayer.render({
-							linkService: {getDestinationHash: function(x) {console.log(x); return x}},
+							linkService: {getDestinationHash: x => "https://bitaon.macam.ac.il/articles/10933"},
 							viewport: viewport.clone({ dontFlip: true }),
 							div: $(ann_id).get(0),
 							annotations: annotationData,
