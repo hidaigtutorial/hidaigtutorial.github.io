@@ -30,7 +30,7 @@ border-color: #DDDDDD;
 color: #BBBBBB;
 border-color: #BBBBBB;
 }
-#annotation-layer { 
+.annotation { 
     position: absolute;
     left: 0;
     top: 0;
@@ -41,7 +41,7 @@ border-color: #BBBBBB;
     line-height: 1.0;
 }
 
-#annotation-layer > section {
+.annotation > section {
     color: transparent;
     position: absolute;
     white-space: pre;
@@ -49,7 +49,7 @@ border-color: #BBBBBB;
     transform-origin: 0% 0%;
 }
 
-#annotation-layer > .linkAnnotation > a {
+.annotation > .linkAnnotation > a {
     position: absolute;
     font-size: 1em;
     top: 0;
@@ -69,7 +69,7 @@ border-color: #BBBBBB;
 <div id="flipbook" style="margin: 3em auto 2em">
     <div id="clone">
         <canvas id="pdf_renderer0"></canvas>
-	<div id="annotation-layer"></div>
+	<div id="annotation-layer0" class="annotation"></div>
     </div>
 </div>
 <script>
@@ -85,6 +85,7 @@ border-color: #BBBBBB;
         $("#clone").clone().appendTo("#flipbook" )
         $("#flipbook").children()[n-i+1].id = "div" + (i).toString()
         $("#flipbook").children()[n-i+1].children[0].id = "pdf_renderer" + (i).toString()
+	$("#flipbook").children()[n-i+1].children[1].id = "annotation-layer" + (i).toString()      
        await pdf.getPage(i).then((page) => {
            
                var canvas = document.getElementById("pdf_renderer" + (i).toString());
@@ -108,13 +109,14 @@ border-color: #BBBBBB;
 							    left: canvas.offsetWidth
 						    }
 						    // Assign CSS to the text-layer element
-						    $("#annotation-layer").css({ left: canvas_offset.left + 'px', top: canvas_offset.top + 'px', height: canvas.height + 'px', width: canvas.width + 'px' });
+						    let ann_id = "#annotation-layer" + (i).toString()
+						    $(ann_id).css({ left: canvas_offset.left + 'px', top: canvas_offset.top + 'px', height: canvas.height + 'px', width: canvas.width + 'px' });
 
 						    // Pass the data to the method for rendering of text over the pdf canvas.
 						    pdfjsLib.AnnotationLayer.render({
 							linkService: 2,
 							viewport: viewport.clone({ dontFlip: true }),
-							div: $("#annotation-layer").get(0),
+							div: $(ann_id).get(0),
 							annotations: annotationData,
 							page: page
 						    });
