@@ -30,8 +30,8 @@ border-color: #DDDDDD;
 color: #BBBBBB;
 border-color: #BBBBBB;
 }
-#annotation-layer { 
-    position: absolute;
+#text-layer { 
+   position: absolute;
     left: 0;
     top: 0;
     right: 0;
@@ -41,21 +41,12 @@ border-color: #BBBBBB;
     line-height: 1.0;
 }
 
-#annotation-layer > section {
+#text-layer > div {
     color: transparent;
     position: absolute;
     white-space: pre;
     cursor: text;
     transform-origin: 0% 0%;
-}
-
-#annotation-layer > .linkAnnotation > a {
-    position: absolute;
-    font-size: 1em;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
 }
 </style>
 </head>
@@ -69,7 +60,7 @@ border-color: #BBBBBB;
 <div id="flipbook" style="margin: 3em auto 2em">
     <div id="clone">
         <canvas id="pdf_renderer0"></canvas>
-	<div id="annotation-layer"></div>
+	<div id="text-layer"></div>
     </div>
 </div>
 <script>
@@ -127,10 +118,9 @@ border-color: #BBBBBB;
 							canvasContext: ctx,
 							viewport: viewport
 						}).then(function() {
-							return page.getAnnotations();
-						}).then(function(annotationData) {
-						    // PDF canvas
-							console.log(annotationData)
+						    return page.getTextContent();
+						}).then(function(textContent) {
+						     // PDF canvas
 						    var pdf_canvas = canvas; 
 
 						    // Canvas offset
@@ -142,17 +132,18 @@ border-color: #BBBBBB;
 						    // Canvas width
 						    var canvas_width = pdf_canvas.get(0).width;
 
-						    // CSS for annotation layer
-						    $("#annotation-layer").css({ left: canvas_offset.left + 'px', top: canvas_offset.top + 'px', height: canvas_height + 'px', width: canvas_width + 'px' });
+						    // Assign CSS to the text-layer element
+						    $("#text-layer").css({ left: canvas_offset.left + 'px', top: canvas_offset.top + 'px', height: canvas_height + 'px', width: canvas_width + 'px' });
 
-						    // Render the annotation layer
-						    PDFJS.AnnotationLayer.render({
-							viewport: viewport.clone({ dontFlip: true }),
-							div: $("#annotation-layer").get(0),
-							annotations: annotationData,
-							page: page
+						    // Pass the data to the method for rendering of text over the pdf canvas.
+						    PDFJS.renderTextLayer({
+							textContent: textContent,
+							container: $("#text-layer").get(0),
+							viewport: viewport,
+							textDivs: []
 						    });
 						});
+
 					}
 				}
 			});
