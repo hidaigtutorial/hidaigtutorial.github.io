@@ -114,7 +114,7 @@ border-color: #BBBBBB;
 						    pdfjsLib.AnnotationLayer.render({
 							linkService: 2,
 							viewport: viewport.clone({ dontFlip: true }),
-							div: $("#annotation-layer"),
+							div: $("#annotation-layer").get(0),
 							annotations: annotationData,
 							page: page
 						    });
