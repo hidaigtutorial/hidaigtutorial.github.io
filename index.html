@@ -102,6 +102,7 @@ border-color: #BBBBBB;
                 }).then(function() {
 						    return page.getAnnotations();
 						}).then(function(annotationData) {
+			console.log(annotationData)
 						    // Canvas offset
 						    var canvas_offset = {
 							    top: canvas.offsetHeight,
