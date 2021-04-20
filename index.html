@@ -132,7 +132,7 @@ border-color: #BBBBBB;
 						    $("#text-layer").css({ left: canvas_offset.left + 'px', top: canvas_offset.top + 'px', height: canvas.height + 'px', width: canvas.width + 'px' });
 
 						    // Pass the data to the method for rendering of text over the pdf canvas.
-						    PDFJS.renderTextLayer({
+						    pdfjsLib.renderTextLayer({
 							textContent: textContent,
 							container: $("#text-layer").get(0),
 							viewport: viewport,
