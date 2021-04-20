@@ -121,21 +121,15 @@ border-color: #BBBBBB;
 						    return page.getTextContent();
 						}).then(function(textContent) {
 						console.log('herr');
-						console.log(textContent);
-						     // PDF canvas
-						    var pdf_canvas = canvas; 
+						console.log(textContent); 
 
 						    // Canvas offset
-						    var canvas_offset = pdf_canvas.offset();
-
-						    // Canvas height
-						    var canvas_height = pdf_canvas.get(0).height;
-
-						    // Canvas width
-						    var canvas_width = pdf_canvas.get(0).width;
+						    var canvas_offset = {
+							    top: canvas.offsetHeight,
+							    left: canvas.offsetWidth
 
 						    // Assign CSS to the text-layer element
-						    $("#text-layer").css({ left: canvas_offset.left + 'px', top: canvas_offset.top + 'px', height: canvas_height + 'px', width: canvas_width + 'px' });
+						    $("#text-layer").css({ left: canvas_offset.left + 'px', top: canvas_offset.top + 'px', height: canvas.height + 'px', width: canvas.width + 'px' });
 
 						    // Pass the data to the method for rendering of text over the pdf canvas.
 						    PDFJS.renderTextLayer({
