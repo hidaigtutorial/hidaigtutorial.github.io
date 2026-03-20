@@ -417,7 +417,7 @@ tailwind.config = {
 // ═══════════════════════════════════════════════════════════
 const STATE = {
   appId: '',
-  token: null,
+  token: '',
   channelName: '',
   localUid: null,
   userName: '',
@@ -494,7 +494,7 @@ function joinRoom() {
   if (!name) return showToast('Enter your name');
   if (!room) return showToast('Enter a room code');
   if (!appId) return showToast('Enter your Agora App ID');
-  startGame(name, room, appId, token || null, 10);
+  startGame(name, room, appId, token || '', 10);
 }
 
 function createRoom() {
@@ -505,7 +505,7 @@ function createRoom() {
   if (!name) return showToast('Enter your name');
   if (!room) return showToast('Enter a room name');
   if (!appId) return showToast('Enter your Agora App ID');
-  startGame(name, room, appId, token || null, selectedMaxPlayers);
+  startGame(name, room, appId, token || '', selectedMaxPlayers);
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -726,50 +726,74 @@ function renderBoard() {
   updateCardsLeft();
 }
 
+// A single MediaStreamTrack can only be attached to one <video> at a time.
+// To show the same stream in two cards we clone the underlying track and
+// create an independent MediaStream for each card element.
+function playTrackInContainer(agoraTrack, container) {
+  const rawTrack = agoraTrack.getMediaStreamTrack ? agoraTrack.getMediaStreamTrack() : null;
+  const video = document.createElement('video');
+  video.autoplay = true;
+  video.muted = true;
+  video.playsInline = true;
+  video.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;';
+  if (rawTrack) {
+    const cloned = rawTrack.clone();
+    video.srcObject = new MediaStream([cloned]);
+    video._clonedTrack = cloned; // keep reference so we can stop it later
+  } else {
+    // Fallback: let Agora manage a temporary div and steal its video element
+    const tmp = document.createElement('div');
+    tmp.style.display = 'none';
+    document.body.appendChild(tmp);
+    agoraTrack.play(tmp);
+    const src = tmp.querySelector('video');
+    if (src) video.srcObject = src.srcObject;
+    document.body.removeChild(tmp);
+  }
+  container.appendChild(video);
+  video.play().catch(() => {});
+}
+
 function renderVideoInCards() {
   STATE.cards.forEach((card, idx) => {
     const back = document.getElementById('card-back-' + idx);
     if (!back) return;
 
-    // Remove existing video elements (keep label/badge)
-    back.querySelectorAll('video, svg, img').forEach(el => el.remove());
+    // Stop any cloned tracks before wiping the DOM
+    back.querySelectorAll('video').forEach(v => {
+      if (v._clonedTrack) { try { v._clonedTrack.stop(); } catch(_) {} }
+    });
+    // Remove previous content wrappers (keep name label and spectator badge)
+    back.querySelectorAll('.card-video-wrap').forEach(el => el.remove());
+
+    const wrap = document.createElement('div');
+    wrap.className = 'card-video-wrap absolute inset-0';
 
     if (card.isPlaceholder) {
-      // Placeholder SVG
       const phIdx = parseInt(card.pairId) % PLACEHOLDERS.length;
-      const div = document.createElement('div');
-      div.className = 'absolute inset-0';
-      div.innerHTML = PLACEHOLDERS[phIdx];
-      div.querySelector('svg').setAttribute('width', '100%');
-      div.querySelector('svg').setAttribute('height', '100%');
-      back.insertBefore(div, back.firstChild);
+      wrap.innerHTML = PLACEHOLDERS[phIdx];
+      const svg = wrap.querySelector('svg');
+      if (svg) { svg.setAttribute('width', '100%'); svg.setAttribute('height', '100%'); }
+      back.insertBefore(wrap, back.firstChild);
       return;
     }
 
     const uid = card.participantUid;
 
-    // Local user
     if (uid === STATE.myUid && STATE.localVideoTrack) {
-      const container = document.createElement('div');
-      container.className = 'absolute inset-0';
-      back.insertBefore(container, back.firstChild);
-      STATE.localVideoTrack.play(container);
+      playTrackInContainer(STATE.localVideoTrack, wrap);
+      back.insertBefore(wrap, back.firstChild);
       return;
     }
 
-    // Remote user
     const remote = STATE.remoteUsers[uid];
     if (remote?.videoTrack) {
-      const container = document.createElement('div');
-      container.className = 'absolute inset-0';
-      back.insertBefore(container, back.firstChild);
-      remote.videoTrack.play(container);
+      playTrackInContainer(remote.videoTrack, wrap);
+      back.insertBefore(wrap, back.firstChild);
     } else {
-      // No video yet — show a colored placeholder
-      const div = document.createElement('div');
-      div.className = 'absolute inset-0 flex items-center justify-center bg-surface-container';
-      div.innerHTML = `<span class="material-symbols-outlined text-on-surface-variant text-3xl">person</span>`;
-      back.insertBefore(div, back.firstChild);
+      wrap.className += ' flex items-center justify-center bg-surface-container';
+      wrap.innerHTML = `<span class="material-symbols-outlined text-on-surface-variant text-3xl">person</span>`;
+      back.insertBefore(wrap, back.firstChild);
     }
   });
 }
@@ -1130,4 +1154,4 @@ window.onbeforeunload = () => {
 };
 </script>
 </body>
-</html>
+  </html>
