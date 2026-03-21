@@ -351,7 +351,7 @@ tailwind.config = {
       <!-- Invite -->
       <div class="p-3 border-t border-outline-variant/30">
         <button onclick="copyRoomCode()" class="w-full py-2 bg-primary/10 border border-primary/30 rounded-xl text-primary text-xs font-bold uppercase tracking-wider hover:bg-primary/20 transition-colors">
-          📋 Copy Room Code
+          🔗 Copy Invite Link
         </button>
       </div>
     </aside>
@@ -1044,7 +1044,12 @@ function showToast(msg) {
 }
 
 function copyRoomCode() {
-  navigator.clipboard.writeText(STATE.channelName).then(() => showToast('Room code copied: ' + STATE.channelName));
+  const base = window.location.href.split('?')[0];
+  const url = new URL(base);
+  url.searchParams.set('room', STATE.channelName);
+  url.searchParams.set('id', STATE.appId);
+  if (STATE.token) url.searchParams.set('t', STATE.token);
+  navigator.clipboard.writeText(url.toString()).then(() => showToast('Invite link copied!'));
 }
 
 // Timer
@@ -1152,6 +1157,39 @@ window.addEventListener('resize', () => {
 window.onbeforeunload = () => {
   if (STATE.client) return 'Leave the game?';
 };
+
+// ═══════════════════════════════════════════════════════════
+//  URL PARAM PREFILL
+// ═══════════════════════════════════════════════════════════
+(function readInviteParams() {
+  const p = new URLSearchParams(window.location.search);
+  const room  = p.get('room');
+  const appId = p.get('id');
+  const token = p.get('t');
+
+  if (!room && !appId) return; // nothing to prefill
+
+  // Switch to join tab and prefill fields
+  setTab('join');
+  if (room)  { const el = document.getElementById('join-room');  if (el) el.value = room.toUpperCase(); }
+  if (appId) { const el = document.getElementById('join-appid'); if (el) el.value = appId; }
+  if (token) { const el = document.getElementById('join-token'); if (el) el.value = token; }
+
+  // Highlight the name field so the user knows what's left to fill
+  const nameEl = document.getElementById('join-name');
+  if (nameEl) {
+    nameEl.focus();
+    nameEl.placeholder = 'Enter your display name to join';
+    nameEl.classList.add('border-tertiary');
+  }
+
+  // Show a banner explaining the prefill
+  const banner = document.createElement('div');
+  banner.className = 'mb-4 px-4 py-3 rounded-xl bg-tertiary-container/30 border border-tertiary/40 text-on-tertiary text-xs font-bold text-center fade-in';
+  banner.textContent = '⚡ You were invited to ' + (room || 'a room') + ' — just enter your name and join!';
+  const formJoin = document.getElementById('form-join');
+  if (formJoin) formJoin.insertBefore(banner, formJoin.firstChild);
+})();
 </script>
 </body>
-  </html>
+</html>
