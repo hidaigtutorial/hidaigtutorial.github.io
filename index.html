@@ -6,9 +6,7 @@
 <title>Electric Sandbox — Memory Game</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <script src="https://download.agora.io/sdk/release/AgoraRTC_N-4.21.0.js"></script>
-<!--script src="https://download.agora.io/rtm/release/AgoraRTM-1.5.1.js"></script-->
-<script src="
-https://cdn.jsdelivr.net/npm/agora-rtm-sdk@2.2.2/agora-rtm.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/agora-rtm-sdk@2.2.2/agora-rtm.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <script id="tailwind-config">
@@ -240,13 +238,13 @@ tailwind.config = {
 //  STATE
 // ══════════════════════════════════════════════════════
 const S = {
-  appId:'', token:'', channelName:'', localUid:null, userName:'',
+  appId:'', token:'', channelName:'', rtmChannelName:'', localUid:null, userName:'',
   maxVideoPlayers:10, isHost:false, boardSeed:0,
   // RTC
   client:null, localAudioTrack:null, localVideoTrack:null, remoteUsers:{},
   micOn:true, camOn:true,
   // RTM
-  rtmClient:null, rtmChannel:null,
+  rtmClient:null,
   // Game
   participants:[], cards:[], cardPositions:[],
   flippedCards:[], currentTurnIdx:0, scores:{},
@@ -328,12 +326,13 @@ async function startGame(userName,channelName,appId,token,maxPlayers,asHost) {
     [S.localAudioTrack,S.localVideoTrack] = await AgoraRTC.createMicrophoneAndCameraTracks();
     await S.client.publish([S.localAudioTrack,S.localVideoTrack]);
 
-    // RTM
-    S.rtmClient = AgoraRTM.createInstance(appId);
-    await S.rtmClient.login({uid:S.myUid, token:token||null});
-    S.rtmChannel = S.rtmClient.createChannel(channelName);
-    await S.rtmChannel.join();
+    // RTM v2
+    const { RTM } = AgoraRTM;
+    S.rtmClient = new RTM(appId, S.myUid, { token: token||undefined });
     setupRtmEvents();
+    await S.rtmClient.login();
+    await S.rtmClient.subscribe(channelName);
+    S.rtmChannelName = channelName;
     rtmDot('connected');
 
     addParticipant(S.myUid,userName,false,false);
@@ -361,13 +360,37 @@ async function startGame(userName,channelName,appId,token,maxPlayers,asHost) {
 // ══════════════════════════════════════════════════════
 //  RTM
 // ══════════════════════════════════════════════════════
-function broadcast(obj) { S.rtmChannel?.sendMessage({text:JSON.stringify(obj)}).catch(()=>{}); }
-function sendTo(uid,obj) { S.rtmClient?.sendMessageToPeer({text:JSON.stringify(obj)},String(uid)).catch(()=>{}); }
+function broadcast(obj) {
+  if(!S.rtmClient||!S.rtmChannelName) return;
+  S.rtmClient.publish(S.rtmChannelName, JSON.stringify(obj), {channelType:'MESSAGE'}).catch(()=>{});
+}
+function sendTo(uid,obj) {
+  if(!S.rtmClient) return;
+  // RTM v2 peer messaging via storage attribute trick — use a dedicated presence message channel instead
+  // For simplicity, broadcast with a target uid field; all clients ignore if not addressed to them
+  broadcast({...obj, _to: String(uid)});
+}
 
 function setupRtmEvents() {
-  S.rtmChannel.on('ChannelMessage',({text},from)=>{ try{onMsg(JSON.parse(text),from)}catch(e){} });
-  S.rtmClient.on('MessageFromPeer',({text},from)=>{ try{onMsg(JSON.parse(text),from)}catch(e){} });
-  S.rtmChannel.on('MemberLeft',uid=>{ peerLeft(uid); });
+  // RTM v2 uses addEventListener on the client instance
+  S.rtmClient.addEventListener('message', event => {
+    try {
+      const msg = JSON.parse(event.message);
+      // If message has a _to field, only process if it's addressed to us
+      if(msg._to && msg._to !== S.myUid) return;
+      onMsg(msg, event.publisher);
+    } catch(e) {}
+  });
+  S.rtmClient.addEventListener('presence', event => {
+    if(event.eventType === 'LEAVE' || event.eventType === 'TIMEOUT') {
+      peerLeft(event.publisher);
+    }
+  });
+  S.rtmClient.addEventListener('status', event => {
+    if(event.state === 'CONNECTED') rtmDot('connected');
+    else if(event.state === 'CONNECTING') rtmDot('connecting');
+    else rtmDot('error');
+  });
 }
 
 function onMsg(m,from) {
@@ -871,8 +894,9 @@ async function leaveRoom() {
   clearInterval(S.timerInterval);
   if(S.localAudioTrack){S.localAudioTrack.close();S.localAudioTrack=null;}
   if(S.localVideoTrack){S.localVideoTrack.close();S.localVideoTrack=null;}
-  if(S.rtmChannel){await S.rtmChannel.leave().catch(()=>{});S.rtmChannel=null;}
+  if(S.rtmClient&&S.rtmChannelName){await S.rtmClient.unsubscribe(S.rtmChannelName).catch(()=>{});}
   if(S.rtmClient){await S.rtmClient.logout().catch(()=>{});S.rtmClient=null;}
+  S.rtmChannelName='';
   if(S.client){await S.client.leave().catch(()=>{});S.client=null;}
   S.participants=[];S.remoteUsers={};S.cards=[];S.scores={};S.cardPositions=[];
   g('game-screen').classList.add('hidden');
