@@ -94,7 +94,7 @@ tailwind.config = {
 <div id="lobby-screen" class="lobby-bg flex items-center justify-center">
   <div class="w-full max-w-md px-6 slide-up">
     <div class="text-center mb-10">
-      <div class="text-4xl font-black text-primary italic uppercase tracking-wider font-headline mb-2">⚡ Electric Sandbox</div>
+      <div class="text-4xl font-black text-primary italic uppercase tracking-wider font-headline mb-2">⚡ Electric Hive</div>
       <p class="text-on-surface-variant text-sm">Video Memory Game · Meet &amp; Match</p>
     </div>
     <div class="flex bg-surface-container rounded-xl p-1 mb-6">
@@ -327,7 +327,7 @@ async function startGame(userName,channelName,appId,token,maxPlayers,asHost) {
     await S.client.publish([S.localAudioTrack,S.localVideoTrack]);
 
     // RTM
-    S.rtmClient = AgoraRTM.createInstance(appId);
+    S.rtmClient = window.AgoraRTM.createInstance(appId);
     await S.rtmClient.login({uid:S.myUid, token:token||null});
     S.rtmChannel = S.rtmClient.createChannel(channelName);
     await S.rtmChannel.join();
