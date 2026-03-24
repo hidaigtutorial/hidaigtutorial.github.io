@@ -6,7 +6,7 @@
 <title>Electric Sandbox — Memory Game</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <script src="https://download.agora.io/sdk/release/AgoraRTC_N-4.21.0.js"></script>
-<script src="https://download.agora.io/rtm/release/AgoraRTM-1.5.1.js"></script>
+<!--script src="https://download.agora.io/rtm/release/AgoraRTM-1.5.1.js"></script-->
 <script src="
 https://cdn.jsdelivr.net/npm/agora-rtm-sdk@1.5.1/agora-rtm.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet"/>
@@ -329,7 +329,7 @@ async function startGame(userName,channelName,appId,token,maxPlayers,asHost) {
     await S.client.publish([S.localAudioTrack,S.localVideoTrack]);
 
     // RTM
-    S.rtmClient = window.AgoraRTM.createInstance(appId);
+    S.rtmClient = AgoraRTM.createInstance(appId);
     await S.rtmClient.login({uid:S.myUid, token:token||null});
     S.rtmChannel = S.rtmClient.createChannel(channelName);
     await S.rtmChannel.join();
