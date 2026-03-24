@@ -372,9 +372,12 @@ function sendTo(uid,obj) {
 }
 
 function setupRtmEvents() {
-  // RTM v2 uses addEventListener on the client instance
+  // RTM v2 uses addEventListener on the client instance.
+  // IMPORTANT: RTM v2 echoes our own published messages back to us, so we
+  // must explicitly ignore any message where publisher === our own UID.
   S.rtmClient.addEventListener('message', event => {
     try {
+      if(event.publisher === S.myUid) return; // ignore own echo
       const msg = JSON.parse(event.message);
       // If message has a _to field, only process if it's addressed to us
       if(msg._to && msg._to !== S.myUid) return;
