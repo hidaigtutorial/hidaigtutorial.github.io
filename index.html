@@ -6,390 +6,217 @@
 <title>Electric Sandbox — Memory Game</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <script src="https://download.agora.io/sdk/release/AgoraRTC_N-4.21.0.js"></script>
+<script src="https://download.agora.io/rtm/release/AgoraRTM-1.5.1.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-
 <script id="tailwind-config">
 tailwind.config = {
-  darkMode: "class",
-  theme: {
-    extend: {
-      colors: {
-        "primary": "#97a9ff",
-        "primary-dim": "#3e65ff",
-        "primary-container": "#859aff",
-        "on-primary": "#002283",
-        "secondary": "#c57eff",
-        "secondary-container": "#6a0baa",
-        "on-secondary": "#340058",
-        "tertiary": "#ffe484",
-        "tertiary-container": "#fdd404",
-        "on-tertiary": "#635200",
-        "error": "#ff6e84",
-        "error-container": "#a70138",
-        "surface": "#0e0e10",
-        "surface-dim": "#0e0e10",
-        "surface-bright": "#2c2c2f",
-        "surface-container": "#19191c",
-        "surface-container-low": "#131315",
-        "surface-container-high": "#1f1f22",
-        "surface-container-highest": "#262528",
-        "surface-variant": "#262528",
-        "on-surface": "#f6f3f5",
-        "on-surface-variant": "#acaaad",
-        "background": "#0e0e10",
-        "on-background": "#f6f3f5",
-        "outline": "#767577",
-        "outline-variant": "#48474a",
-      },
-      fontFamily: {
-        "headline": ["Plus Jakarta Sans", "sans-serif"],
-        "body": ["Space Grotesk", "sans-serif"],
-      },
-      borderRadius: {
-        DEFAULT: "0.75rem",
-        lg: "1.25rem",
-        xl: "2rem",
-        full: "9999px"
-      },
-      keyframes: {
-        flip: {
-          '0%': { transform: 'rotateY(0deg)' },
-          '100%': { transform: 'rotateY(180deg)' }
-        },
-        unflip: {
-          '0%': { transform: 'rotateY(180deg)' },
-          '100%': { transform: 'rotateY(0deg)' }
-        },
-        pulseGlow: {
-          '0%, 100%': { boxShadow: '0 0 10px rgba(253,212,4,0.3)' },
-          '50%': { boxShadow: '0 0 30px rgba(253,212,4,0.8), 0 0 60px rgba(253,212,4,0.3)' }
-        },
-        matchBurst: {
-          '0%': { transform: 'scale(1)', opacity: '1' },
-          '50%': { transform: 'scale(1.15)', opacity: '1' },
-          '100%': { transform: 'scale(1)', opacity: '1' }
-        },
-        slideUp: {
-          '0%': { transform: 'translateY(30px)', opacity: '0' },
-          '100%': { transform: 'translateY(0)', opacity: '1' }
-        },
-        fadeIn: {
-          '0%': { opacity: '0' },
-          '100%': { opacity: '1' }
-        }
-      }
-    }
-  }
+  darkMode:"class",
+  theme:{ extend:{
+    colors:{
+      "primary":"#97a9ff","primary-dim":"#3e65ff","primary-container":"#859aff","on-primary":"#002283",
+      "secondary":"#c57eff","secondary-container":"#6a0baa","on-secondary":"#340058",
+      "tertiary":"#ffe484","tertiary-container":"#fdd404","on-tertiary":"#635200",
+      "error":"#ff6e84","error-container":"#a70138",
+      "surface":"#0e0e10","surface-dim":"#0e0e10","surface-bright":"#2c2c2f",
+      "surface-container":"#19191c","surface-container-low":"#131315",
+      "surface-container-high":"#1f1f22","surface-container-highest":"#262528",
+      "surface-variant":"#262528","on-surface":"#f6f3f5","on-surface-variant":"#acaaad",
+      "background":"#0e0e10","on-background":"#f6f3f5","outline":"#767577","outline-variant":"#48474a",
+    },
+    fontFamily:{"headline":["Plus Jakarta Sans","sans-serif"],"body":["Space Grotesk","sans-serif"]},
+    borderRadius:{DEFAULT:"0.75rem",lg:"1.25rem",xl:"2rem",full:"9999px"},
+  }}
 }
 </script>
-
 <style>
-* { box-sizing: border-box; }
-.material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
-.fill-icon { font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+*{box-sizing:border-box}
+.material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24}
+.fill-icon{font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24}
 
-/* Card 3D flip */
-.card-scene { perspective: 600px; }
-.card-inner {
-  position: relative; width: 100%; height: 100%;
-  transform-style: preserve-3d;
-  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.card-inner.flipped { transform: rotateY(180deg); }
-.card-front, .card-back {
-  position: absolute; inset: 0;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-  border-radius: 0.625rem;
-  overflow: hidden;
-}
-.card-front { background: #1f1f22; }
-.card-back { transform: rotateY(180deg); background: #000; }
+/* Card flip */
+.card-scene{perspective:700px;position:absolute}
+.card-inner{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform 0.55s cubic-bezier(0.4,0,0.2,1)}
+.card-inner.flipped{transform:rotateY(180deg)}
+.card-front,.card-back{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:0.6rem;overflow:hidden}
+.card-front{background:#1f1f22}
+.card-back{transform:rotateY(180deg);background:#000}
+.card-matched .card-back{box-shadow:0 0 18px rgba(151,169,255,0.55),inset 0 0 14px rgba(151,169,255,0.1)}
+.card-matched .card-inner{animation:matchBurst 0.4s ease}
+@keyframes matchBurst{0%{transform:rotateY(180deg) scale(1)}50%{transform:rotateY(180deg) scale(1.1)}100%{transform:rotateY(180deg) scale(1)}}
 
-/* Matched card glow */
-.card-matched .card-back { box-shadow: 0 0 20px rgba(151,169,255,0.6), inset 0 0 20px rgba(151,169,255,0.1); }
-.card-matched .card-inner { animation: matchBurst 0.4s ease; }
-@keyframes matchBurst { 0%{transform:rotateY(180deg) scale(1)} 50%{transform:rotateY(180deg) scale(1.12)} 100%{transform:rotateY(180deg) scale(1)} }
+/* Turn pulse */
+.turn-pulse{animation:pulseGlow 2s ease-in-out infinite}
+@keyframes pulseGlow{0%,100%{box-shadow:0 0 8px rgba(253,212,4,0.25)}50%{box-shadow:0 0 26px rgba(253,212,4,0.65),0 0 52px rgba(253,212,4,0.18)}}
 
-/* Turn indicator pulse */
-.turn-pulse { animation: pulseGlow 2s ease-in-out infinite; }
-@keyframes pulseGlow { 0%,100%{box-shadow:0 0 10px rgba(253,212,4,0.3)} 50%{box-shadow:0 0 30px rgba(253,212,4,0.7),0 0 60px rgba(253,212,4,0.2)} }
+/* Animations */
+.slide-up{animation:slideUp 0.5s ease forwards}
+.fade-in{animation:fadeIn 0.4s ease forwards}
+@keyframes slideUp{0%{transform:translateY(28px);opacity:0}100%{transform:translateY(0);opacity:1}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.score-badge.bump{animation:scoreBump 0.3s ease}
+@keyframes scoreBump{0%{transform:scale(1)}50%{transform:scale(1.3)}100%{transform:scale(1)}}
 
-/* Slide up animation */
-.slide-up { animation: slideUp 0.5s ease forwards; }
-@keyframes slideUp { 0%{transform:translateY(30px);opacity:0} 100%{transform:translateY(0);opacity:1} }
-
-/* Fade in */
-.fade-in { animation: fadeIn 0.4s ease forwards; }
-@keyframes fadeIn { from{opacity:0} to{opacity:1} }
-
-/* Custom scrollbar */
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #48474a; border-radius: 9999px; }
-
-/* Video container */
-.video-container video { width: 100%; height: 100%; object-fit: cover; }
-.video-container { background: #000; }
-
-/* Notification toast */
-#toast {
-  position: fixed; bottom: 120px; left: 50%; transform: translateX(-50%) translateY(20px);
-  background: #262528; border: 1px solid #48474a; color: #f6f3f5;
-  padding: 0.75rem 1.5rem; border-radius: 9999px; font-family: 'Space Grotesk', sans-serif;
-  font-weight: 600; font-size: 0.875rem; opacity: 0;
-  transition: all 0.3s ease; pointer-events: none; z-index: 1000; white-space: nowrap;
-}
-#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-
-/* Lobby screen */
-#lobby-screen { position: fixed; inset: 0; z-index: 200; background: #0e0e10; }
-
-/* Score badge */
-.score-badge { transition: transform 0.2s ease; }
-.score-badge.bump { animation: scoreBump 0.3s ease; }
-@keyframes scoreBump { 0%{transform:scale(1)} 50%{transform:scale(1.3)} 100%{transform:scale(1)} }
+/* Scrollbar */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#48474a;border-radius:9999px}
 
 /* Spectator badge */
-.spectator-badge {
-  position: absolute; top: 2px; right: 2px;
-  background: rgba(197,126,255,0.9); border-radius: 4px;
-  font-size: 9px; font-weight: 700; color: #340058;
-  padding: 1px 4px; text-transform: uppercase;
-}
+.spectator-badge{position:absolute;top:2px;right:2px;background:rgba(197,126,255,0.9);border-radius:4px;font-size:9px;font-weight:700;color:#340058;padding:1px 4px;text-transform:uppercase}
 
-/* Chat panel */
-#chat-panel {
-  position: fixed; right: 0; bottom: 90px; width: 288px;
-  background: #131315; border: 1px solid #262528;
-  border-radius: 1rem 1rem 0 0; z-index: 60;
-  transform: translateY(100%); transition: transform 0.3s ease;
-  max-height: 400px; display: flex; flex-direction: column;
-}
-#chat-panel.open { transform: translateY(0); }
+/* Toast */
+#toast{position:fixed;bottom:110px;left:50%;transform:translateX(-50%) translateY(16px);background:#262528;border:1px solid #48474a;color:#f6f3f5;padding:0.6rem 1.4rem;border-radius:9999px;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:0.85rem;opacity:0;transition:all 0.3s ease;pointer-events:none;z-index:1000;white-space:nowrap}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
-/* Grid board */
-.board-grid {
-  display: grid;
-  gap: 0.375rem;
-}
+/* Chat */
+#chat-panel{position:fixed;right:0;bottom:82px;width:288px;background:#131315;border:1px solid #262528;border-radius:1rem 1rem 0 0;z-index:60;transform:translateY(100%);transition:transform 0.3s ease;max-height:400px;display:flex;flex-direction:column}
+#chat-panel.open{transform:translateY(0)}
 
-/* Lobby gradient bg */
-.lobby-bg {
-  background: radial-gradient(ellipse at 30% 20%, rgba(151,169,255,0.12) 0%, transparent 60%),
-              radial-gradient(ellipse at 70% 80%, rgba(197,126,255,0.1) 0%, transparent 60%),
-              #0e0e10;
-}
+/* Lobby */
+#lobby-screen{position:fixed;inset:0;z-index:200;background:#0e0e10}
+.lobby-bg{background:radial-gradient(ellipse at 30% 20%,rgba(151,169,255,0.12) 0%,transparent 60%),radial-gradient(ellipse at 70% 80%,rgba(197,126,255,0.10) 0%,transparent 60%),#0e0e10}
+
+/* Hive board */
+#board{position:relative}
+
+/* RTM dot */
+#rtm-dot{width:7px;height:7px;border-radius:50%;background:#48474a;display:inline-block;margin-right:5px;vertical-align:middle;transition:background 0.4s}
+#rtm-dot.connected{background:#4ade80;box-shadow:0 0 6px rgba(74,222,128,0.6)}
+#rtm-dot.connecting{background:#fbbf24;animation:dotPulse 1s infinite}
+#rtm-dot.error{background:#f87171}
+@keyframes dotPulse{0%,100%{opacity:1}50%{opacity:0.35}}
 </style>
 </head>
 <body class="bg-background text-on-surface font-body overflow-hidden h-screen">
 
-<!-- ═══════════════════════════════════════════════ LOBBY SCREEN ═══ -->
+<!-- LOBBY -->
 <div id="lobby-screen" class="lobby-bg flex items-center justify-center">
   <div class="w-full max-w-md px-6 slide-up">
-    <!-- Logo -->
     <div class="text-center mb-10">
-      <div class="text-4xl font-black text-primary italic uppercase tracking-wider font-headline mb-2">
-        ⚡ Electric Sandbox
-      </div>
-      <p class="text-on-surface-variant text-sm">Video Memory Game · Meet & Match</p>
+      <div class="text-4xl font-black text-primary italic uppercase tracking-wider font-headline mb-2">⚡ Electric Sandbox</div>
+      <p class="text-on-surface-variant text-sm">Video Memory Game · Meet &amp; Match</p>
     </div>
-
-    <!-- Tabs -->
     <div class="flex bg-surface-container rounded-xl p-1 mb-6">
-      <button id="tab-join" onclick="setTab('join')"
-        class="flex-1 py-2.5 text-sm font-bold rounded-lg transition-all duration-200 bg-surface-bright text-on-surface">
-        Join Room
-      </button>
-      <button id="tab-create" onclick="setTab('create')"
-        class="flex-1 py-2.5 text-sm font-bold rounded-lg transition-all duration-200 text-on-surface-variant">
-        Create Room
-      </button>
+      <button id="tab-join" onclick="setTab('join')" class="flex-1 py-2.5 text-sm font-bold rounded-lg transition-all duration-200 bg-surface-bright text-on-surface">Join Room</button>
+      <button id="tab-create" onclick="setTab('create')" class="flex-1 py-2.5 text-sm font-bold rounded-lg transition-all duration-200 text-on-surface-variant">Create Room</button>
     </div>
 
-    <!-- JOIN FORM -->
+    <!-- JOIN -->
     <div id="form-join" class="space-y-4">
       <div>
         <label class="text-xs uppercase tracking-widest text-on-surface-variant font-bold block mb-1.5">Your Name</label>
-        <input id="join-name" type="text" placeholder="e.g. Alex M."
-          class="w-full bg-surface-container border border-outline-variant rounded-xl px-4 py-3 text-on-surface placeholder-on-surface-variant/50 focus:outline-none focus:border-primary transition-colors" />
+        <input id="join-name" type="text" placeholder="e.g. Alex M." class="w-full bg-surface-container border border-outline-variant rounded-xl px-4 py-3 text-on-surface placeholder-on-surface-variant/50 focus:outline-none focus:border-primary transition-colors"/>
       </div>
       <div>
         <label class="text-xs uppercase tracking-widest text-on-surface-variant font-bold block mb-1.5">Room Code</label>
-        <input id="join-room" type="text" placeholder="e.g. ALPHA-ONE"
-          class="w-full bg-surface-container border border-outline-variant rounded-xl px-4 py-3 text-on-surface placeholder-on-surface-variant/50 focus:outline-none focus:border-primary transition-colors uppercase" />
+        <input id="join-room" type="text" placeholder="e.g. ALPHA-ONE" class="w-full bg-surface-container border border-outline-variant rounded-xl px-4 py-3 text-on-surface placeholder-on-surface-variant/50 focus:outline-none focus:border-primary transition-colors uppercase"/>
       </div>
       <div>
         <label class="text-xs uppercase tracking-widest text-on-surface-variant font-bold block mb-1.5">Agora App ID</label>
-        <input id="join-appid" type="text" placeholder="Your Agora App ID"
-          class="w-full bg-surface-container border border-outline-variant rounded-xl px-4 py-3 text-on-surface placeholder-on-surface-variant/50 focus:outline-none focus:border-primary transition-colors font-mono text-sm" />
+        <input id="join-appid" type="text" placeholder="Your Agora App ID" class="w-full bg-surface-container border border-outline-variant rounded-xl px-4 py-3 text-on-surface placeholder-on-surface-variant/50 focus:outline-none focus:border-primary transition-colors font-mono text-sm"/>
       </div>
       <div>
         <label class="text-xs uppercase tracking-widest text-on-surface-variant font-bold block mb-1.5">Token (optional)</label>
-        <input id="join-token" type="text" placeholder="Leave blank if not using token auth"
-          class="w-full bg-surface-container border border-outline-variant rounded-xl px-4 py-3 text-on-surface placeholder-on-surface-variant/50 focus:outline-none focus:border-primary transition-colors font-mono text-sm" />
+        <input id="join-token" type="text" placeholder="Leave blank if not using token auth" class="w-full bg-surface-container border border-outline-variant rounded-xl px-4 py-3 text-on-surface placeholder-on-surface-variant/50 focus:outline-none focus:border-primary transition-colors font-mono text-sm"/>
       </div>
-      <button onclick="joinRoom()"
-        class="w-full py-3.5 bg-gradient-to-r from-primary to-primary-container text-on-primary font-black rounded-xl uppercase tracking-wider text-sm hover:scale-[1.02] active:scale-[0.98] transition-transform shadow-lg shadow-primary/20 mt-2">
-        ⚡ Join Game
-      </button>
+      <button onclick="joinRoom()" class="w-full py-3.5 bg-gradient-to-r from-primary to-primary-container text-on-primary font-black rounded-xl uppercase tracking-wider text-sm hover:scale-[1.02] active:scale-[0.98] transition-transform shadow-lg shadow-primary/20 mt-2">⚡ Join Game</button>
     </div>
 
-    <!-- CREATE FORM -->
+    <!-- CREATE -->
     <div id="form-create" class="space-y-4 hidden">
       <div>
         <label class="text-xs uppercase tracking-widest text-on-surface-variant font-bold block mb-1.5">Your Name</label>
-        <input id="create-name" type="text" placeholder="e.g. Host Alex"
-          class="w-full bg-surface-container border border-outline-variant rounded-xl px-4 py-3 text-on-surface placeholder-on-surface-variant/50 focus:outline-none focus:border-primary transition-colors" />
+        <input id="create-name" type="text" placeholder="e.g. Host Alex" class="w-full bg-surface-container border border-outline-variant rounded-xl px-4 py-3 text-on-surface placeholder-on-surface-variant/50 focus:outline-none focus:border-primary transition-colors"/>
       </div>
       <div>
         <label class="text-xs uppercase tracking-widest text-on-surface-variant font-bold block mb-1.5">Room Name</label>
-        <input id="create-room" type="text" placeholder="e.g. ALPHA-ONE"
-          class="w-full bg-surface-container border border-outline-variant rounded-xl px-4 py-3 text-on-surface placeholder-on-surface-variant/50 focus:outline-none focus:border-primary transition-colors uppercase" />
+        <input id="create-room" type="text" placeholder="e.g. ALPHA-ONE" class="w-full bg-surface-container border border-outline-variant rounded-xl px-4 py-3 text-on-surface placeholder-on-surface-variant/50 focus:outline-none focus:border-primary transition-colors uppercase"/>
       </div>
       <div>
         <label class="text-xs uppercase tracking-widest text-on-surface-variant font-bold block mb-1.5">Agora App ID</label>
-        <input id="create-appid" type="text" placeholder="Your Agora App ID"
-          class="w-full bg-surface-container border border-outline-variant rounded-xl px-4 py-3 text-on-surface placeholder-on-surface-variant/50 focus:outline-none focus:border-primary transition-colors font-mono text-sm" />
+        <input id="create-appid" type="text" placeholder="Your Agora App ID" class="w-full bg-surface-container border border-outline-variant rounded-xl px-4 py-3 text-on-surface placeholder-on-surface-variant/50 focus:outline-none focus:border-primary transition-colors font-mono text-sm"/>
       </div>
       <div>
         <label class="text-xs uppercase tracking-widest text-on-surface-variant font-bold block mb-1.5">Token (optional)</label>
-        <input id="create-token" type="text" placeholder="Leave blank if not using token auth"
-          class="w-full bg-surface-container border border-outline-variant rounded-xl px-4 py-3 text-on-surface placeholder-on-surface-variant/50 focus:outline-none focus:border-primary transition-colors font-mono text-sm" />
+        <input id="create-token" type="text" placeholder="Leave blank if not using token auth" class="w-full bg-surface-container border border-outline-variant rounded-xl px-4 py-3 text-on-surface placeholder-on-surface-variant/50 focus:outline-none focus:border-primary transition-colors font-mono text-sm"/>
       </div>
       <div>
         <label class="text-xs uppercase tracking-widest text-on-surface-variant font-bold block mb-1.5">Max Video Players</label>
         <div class="flex gap-3">
-          <button id="btn-max10" onclick="setMaxPlayers(10)"
-            class="flex-1 py-2.5 rounded-xl text-sm font-bold border-2 border-primary bg-primary/10 text-primary transition-all">
-            10 Players
-          </button>
-          <button id="btn-max20" onclick="setMaxPlayers(20)"
-            class="flex-1 py-2.5 rounded-xl text-sm font-bold border-2 border-outline-variant text-on-surface-variant hover:border-primary hover:text-primary transition-all">
-            20 Players
-          </button>
+          <button id="btn-max10" onclick="setMaxPlayers(10)" class="flex-1 py-2.5 rounded-xl text-sm font-bold border-2 border-primary bg-primary/10 text-primary transition-all">10 Players</button>
+          <button id="btn-max20" onclick="setMaxPlayers(20)" class="flex-1 py-2.5 rounded-xl text-sm font-bold border-2 border-outline-variant text-on-surface-variant hover:border-primary hover:text-primary transition-all">20 Players</button>
         </div>
       </div>
-      <button onclick="createRoom()"
-        class="w-full py-3.5 bg-gradient-to-r from-secondary to-secondary-container text-white font-black rounded-xl uppercase tracking-wider text-sm hover:scale-[1.02] active:scale-[0.98] transition-transform shadow-lg shadow-secondary/20 mt-2">
-        ⚡ Create Room
-      </button>
+      <button onclick="createRoom()" class="w-full py-3.5 bg-gradient-to-r from-secondary to-secondary-container text-white font-black rounded-xl uppercase tracking-wider text-sm hover:scale-[1.02] active:scale-[0.98] transition-transform shadow-lg shadow-secondary/20 mt-2">⚡ Create Room</button>
     </div>
-
-    <p class="text-center text-xs text-on-surface-variant mt-6 opacity-60">
-      Requires Agora App ID · Real-time video powered by Agora SDK
-    </p>
+    <p class="text-center text-xs text-on-surface-variant mt-6 opacity-60">Requires Agora App ID · Real-time sync via Agora RTM</p>
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════ GAME SCREEN ═══ -->
+<!-- GAME SCREEN -->
 <div id="game-screen" class="hidden h-screen flex flex-col">
-
-  <!-- TOP BAR -->
   <header class="flex justify-between items-center px-5 py-3 bg-surface/80 backdrop-blur-xl border-b border-outline-variant/30 z-50 flex-shrink-0">
-    <div class="text-xl font-black text-primary italic uppercase tracking-wider font-headline">⚡ ES</div>
+    <div class="flex items-center gap-2">
+      <div class="text-xl font-black text-primary italic uppercase tracking-wider font-headline">⚡ ES</div>
+      <span id="rtm-dot" title="RTM"></span>
+    </div>
     <nav class="flex items-center gap-5">
       <div class="text-xs font-bold uppercase tracking-widest text-primary border-b border-primary pb-0.5 font-headline" id="header-room">Room: —</div>
       <div class="text-xs text-on-surface-variant font-bold font-headline" id="header-timer">00:00</div>
       <div class="text-xs text-tertiary font-black font-headline score-badge" id="header-score">Score: 0</div>
     </nav>
     <div class="flex items-center gap-2">
-      <button onclick="toggleSidebar()" class="text-primary hover:text-white hover:bg-surface-container-high rounded-full p-1.5 transition-all">
-        <span class="material-symbols-outlined text-xl">leaderboard</span>
-      </button>
-      <button onclick="leaveRoom()" class="text-error hover:text-white hover:bg-error-container/30 rounded-full p-1.5 transition-all">
-        <span class="material-symbols-outlined text-xl fill-icon">call_end</span>
-      </button>
+      <button onclick="toggleSidebar()" class="text-primary hover:text-white hover:bg-surface-container-high rounded-full p-1.5 transition-all"><span class="material-symbols-outlined text-xl">leaderboard</span></button>
+      <button onclick="leaveRoom()" class="text-error hover:text-white hover:bg-error-container/30 rounded-full p-1.5 transition-all"><span class="material-symbols-outlined text-xl fill-icon">call_end</span></button>
     </div>
   </header>
 
-  <!-- MAIN CONTENT -->
   <main class="flex flex-1 overflow-hidden">
-
-    <!-- GAME AREA -->
     <section class="flex-1 flex flex-col overflow-hidden px-4 py-3">
-
       <!-- Turn Banner -->
       <div id="turn-banner" class="mb-3 rounded-xl px-5 py-3 turn-pulse flex items-center justify-between bg-tertiary-container text-on-tertiary flex-shrink-0">
         <div class="flex items-center gap-3">
           <span class="material-symbols-outlined text-2xl fill-icon">stars</span>
           <div>
-            <div id="turn-text" class="font-headline font-black text-base uppercase tracking-tight">Waiting...</div>
-            <div id="turn-sub" class="text-xs font-semibold opacity-70">Loading players...</div>
+            <div id="turn-text" class="font-headline font-black text-base uppercase tracking-tight">Waiting…</div>
+            <div id="turn-sub" class="text-xs font-semibold opacity-70">Loading…</div>
           </div>
         </div>
         <div id="cards-left" class="text-xs font-bold text-right opacity-70"></div>
       </div>
-
-      <!-- Board -->
-      <div class="flex-1 overflow-auto">
-        <div id="board" class="board-grid"></div>
+      <!-- Hive Board -->
+      <div class="flex-1 overflow-auto relative" id="board-wrapper">
+        <div id="board"></div>
       </div>
     </section>
 
-    <!-- SIDEBAR -->
+    <!-- Sidebar -->
     <aside id="sidebar" class="w-64 flex-shrink-0 bg-surface-container-low border-l border-outline-variant/30 flex flex-col overflow-hidden transition-all duration-300">
-      <!-- Tabs -->
       <div class="flex border-b border-outline-variant/30">
-        <button onclick="showSidePanel('scores')" id="sp-scores-btn"
-          class="flex-1 py-2.5 text-xs font-bold uppercase tracking-widest text-primary border-b-2 border-primary">Scores</button>
-        <button onclick="showSidePanel('players')" id="sp-players-btn"
-          class="flex-1 py-2.5 text-xs font-bold uppercase tracking-widest text-on-surface-variant">Players</button>
+        <button onclick="showSidePanel('scores')" id="sp-scores-btn" class="flex-1 py-2.5 text-xs font-bold uppercase tracking-widest text-primary border-b-2 border-primary">Scores</button>
+        <button onclick="showSidePanel('players')" id="sp-players-btn" class="flex-1 py-2.5 text-xs font-bold uppercase tracking-widest text-on-surface-variant">Players</button>
       </div>
-
-      <!-- Scores Panel -->
-      <div id="sp-scores" class="flex-1 overflow-y-auto p-3 space-y-1">
-        <!-- populated dynamically -->
-      </div>
-
-      <!-- Players Panel -->
-      <div id="sp-players" class="flex-1 overflow-y-auto p-3 space-y-2 hidden">
-        <!-- populated dynamically -->
-      </div>
-
-      <!-- Invite -->
+      <div id="sp-scores" class="flex-1 overflow-y-auto p-3 space-y-1"></div>
+      <div id="sp-players" class="flex-1 overflow-y-auto p-3 space-y-2 hidden"></div>
       <div class="p-3 border-t border-outline-variant/30">
-        <button onclick="copyRoomCode()" class="w-full py-2 bg-primary/10 border border-primary/30 rounded-xl text-primary text-xs font-bold uppercase tracking-wider hover:bg-primary/20 transition-colors">
-          🔗 Copy Invite Link
-        </button>
+        <button onclick="copyRoomCode()" class="w-full py-2 bg-primary/10 border border-primary/30 rounded-xl text-primary text-xs font-bold uppercase tracking-wider hover:bg-primary/20 transition-colors">🔗 Copy Invite Link</button>
       </div>
     </aside>
   </main>
 
-  <!-- BOTTOM CONTROLS -->
   <nav class="flex-shrink-0 flex justify-center items-center py-3 bg-surface/80 backdrop-blur-xl border-t border-outline-variant/30">
     <div class="flex items-center gap-3">
-      <button id="btn-mic" onclick="toggleMic()"
-        class="flex flex-col items-center p-3 rounded-xl hover:bg-surface-container-high transition-all group text-on-surface">
-        <span id="mic-icon" class="material-symbols-outlined text-xl">mic</span>
-        <span class="text-[9px] font-bold uppercase mt-0.5">Mic</span>
-      </button>
-      <button id="btn-cam" onclick="toggleCamera()"
-        class="flex flex-col items-center p-3 rounded-xl hover:bg-surface-container-high transition-all group text-on-surface">
-        <span id="cam-icon" class="material-symbols-outlined text-xl">videocam</span>
-        <span class="text-[9px] font-bold uppercase mt-0.5">Camera</span>
-      </button>
-      <button onclick="toggleChat()"
-        class="flex flex-col items-center p-3 rounded-xl bg-primary/10 border border-primary/30 transition-all group text-primary">
-        <span class="material-symbols-outlined text-xl fill-icon">chat_bubble</span>
-        <span class="text-[9px] font-bold uppercase mt-0.5">Chat</span>
-      </button>
-      <button onclick="toggleSidebar()"
-        class="flex flex-col items-center p-3 rounded-xl hover:bg-surface-container-high transition-all group text-on-surface">
-        <span class="material-symbols-outlined text-xl">groups</span>
-        <span class="text-[9px] font-bold uppercase mt-0.5">Players</span>
-      </button>
-      <button onclick="leaveRoom()"
-        class="flex flex-col items-center p-3 rounded-xl hover:bg-error-container/20 transition-all group text-error">
-        <span class="material-symbols-outlined text-xl fill-icon">call_end</span>
-        <span class="text-[9px] font-bold uppercase mt-0.5">Leave</span>
-      </button>
+      <button id="btn-mic" onclick="toggleMic()" class="flex flex-col items-center p-3 rounded-xl hover:bg-surface-container-high transition-all text-on-surface"><span id="mic-icon" class="material-symbols-outlined text-xl">mic</span><span class="text-[9px] font-bold uppercase mt-0.5">Mic</span></button>
+      <button id="btn-cam" onclick="toggleCamera()" class="flex flex-col items-center p-3 rounded-xl hover:bg-surface-container-high transition-all text-on-surface"><span id="cam-icon" class="material-symbols-outlined text-xl">videocam</span><span class="text-[9px] font-bold uppercase mt-0.5">Camera</span></button>
+      <button onclick="toggleChat()" class="flex flex-col items-center p-3 rounded-xl bg-primary/10 border border-primary/30 text-primary"><span class="material-symbols-outlined text-xl fill-icon">chat_bubble</span><span class="text-[9px] font-bold uppercase mt-0.5">Chat</span></button>
+      <button onclick="toggleSidebar()" class="flex flex-col items-center p-3 rounded-xl hover:bg-surface-container-high transition-all text-on-surface"><span class="material-symbols-outlined text-xl">groups</span><span class="text-[9px] font-bold uppercase mt-0.5">Players</span></button>
+      <button onclick="leaveRoom()" class="flex flex-col items-center p-3 rounded-xl hover:bg-error-container/20 text-error"><span class="material-symbols-outlined text-xl fill-icon">call_end</span><span class="text-[9px] font-bold uppercase mt-0.5">Leave</span></button>
     </div>
   </nav>
 </div>
 
-<!-- CHAT PANEL -->
+<!-- CHAT -->
 <div id="chat-panel">
   <div class="flex items-center justify-between px-4 py-3 border-b border-outline-variant/30">
     <span class="font-bold text-sm">Chat</span>
@@ -397,798 +224,702 @@ tailwind.config = {
   </div>
   <div id="chat-messages" class="flex-1 overflow-y-auto p-3 space-y-2 text-sm" style="min-height:200px;max-height:260px;"></div>
   <div class="p-3 border-t border-outline-variant/30 flex gap-2">
-    <input id="chat-input" type="text" placeholder="Say something..."
-      class="flex-1 bg-surface-container border border-outline-variant rounded-xl px-3 py-2 text-sm text-on-surface focus:outline-none focus:border-primary"
-      onkeypress="if(event.key==='Enter') sendChat()" />
+    <input id="chat-input" type="text" placeholder="Say something…" class="flex-1 bg-surface-container border border-outline-variant rounded-xl px-3 py-2 text-sm text-on-surface focus:outline-none focus:border-primary" onkeypress="if(event.key==='Enter')sendChat()"/>
     <button onclick="sendChat()" class="bg-primary text-on-primary rounded-xl px-3 py-2 text-xs font-bold">Send</button>
   </div>
 </div>
 
-<!-- TOAST -->
 <div id="toast"></div>
-
-<!-- DECORATIVE BLUR ORBS -->
 <div class="fixed top-1/2 -left-32 w-64 h-64 bg-primary/8 blur-[120px] rounded-full pointer-events-none z-0"></div>
 <div class="fixed bottom-0 -right-24 w-80 h-80 bg-secondary/8 blur-[130px] rounded-full pointer-events-none z-0"></div>
 
 <script>
-// ═══════════════════════════════════════════════════════════
-//  GAME STATE
-// ═══════════════════════════════════════════════════════════
-const STATE = {
-  appId: '',
-  token: '',
-  channelName: '',
-  localUid: null,
-  userName: '',
-  maxVideoPlayers: 10,
-
-  // Agora
-  client: null,
-  localAudioTrack: null,
-  localVideoTrack: null,
-  remoteUsers: {},   // uid -> { user, videoTrack, audioTrack, name }
-
-  // Media state
-  micOn: true,
-  camOn: true,
-
+// ══════════════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════════════
+const S = {
+  appId:'', token:'', channelName:'', localUid:null, userName:'',
+  maxVideoPlayers:10, isHost:false, boardSeed:0,
+  // RTC
+  client:null, localAudioTrack:null, localVideoTrack:null, remoteUsers:{},
+  micOn:true, camOn:true,
+  // RTM
+  rtmClient:null, rtmChannel:null,
   // Game
-  participants: [],  // { uid, name, isPlaceholder, isSpectator }
-  cards: [],         // { id, pairId, participantUid, flipped, matched }
-  flippedCards: [],  // indices of currently flipped (not matched) cards
-  currentTurnIdx: 0,
-  scores: {},        // uid -> { name, pairs }
-  myUid: null,
-  canFlip: false,
-  gameStarted: false,
-  flipLock: false,
-
-  // Timer
-  timerStart: null,
-  timerInterval: null,
+  participants:[], cards:[], cardPositions:[],
+  flippedCards:[], currentTurnIdx:0, scores:{},
+  myUid:null, canFlip:false, flipLock:false,
+  timerStart:null, timerInterval:null,
 };
 
-// Placeholder avatar SVGs (5 different ones)
-const PLACEHOLDERS = [
-  `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><rect width="60" height="60" fill="#1f1f22"/><circle cx="30" cy="22" r="12" fill="#48474a"/><ellipse cx="30" cy="50" rx="18" ry="12" fill="#48474a"/><text x="30" y="26" text-anchor="middle" fill="#acaaad" font-size="12" font-family="monospace">?</text></svg>`,
-  `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><rect width="60" height="60" fill="#19191c"/><circle cx="30" cy="22" r="12" fill="#3e65ff" opacity="0.5"/><ellipse cx="30" cy="50" rx="18" ry="12" fill="#3e65ff" opacity="0.3"/><text x="30" y="26" text-anchor="middle" fill="#97a9ff" font-size="10" font-family="monospace">★</text></svg>`,
-  `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><rect width="60" height="60" fill="#131315"/><circle cx="30" cy="22" r="12" fill="#6a0baa" opacity="0.6"/><ellipse cx="30" cy="50" rx="18" ry="12" fill="#6a0baa" opacity="0.4"/><text x="30" y="26" text-anchor="middle" fill="#c57eff" font-size="10" font-family="monospace">◆</text></svg>`,
-  `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><rect width="60" height="60" fill="#1a1508"/><circle cx="30" cy="22" r="12" fill="#635200" opacity="0.7"/><ellipse cx="30" cy="50" rx="18" ry="12" fill="#635200" opacity="0.5"/><text x="30" y="26" text-anchor="middle" fill="#ffe484" font-size="10" font-family="monospace">⚡</text></svg>`,
-  `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><rect width="60" height="60" fill="#1a0a0c"/><circle cx="30" cy="22" r="12" fill="#a70138" opacity="0.6"/><ellipse cx="30" cy="50" rx="18" ry="12" fill="#a70138" opacity="0.4"/><text x="30" y="26" text-anchor="middle" fill="#ff6e84" font-size="10" font-family="monospace">✦</text></svg>`,
+const PH = [
+  `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><rect width="60" height="60" fill="#1f1f22"/><circle cx="30" cy="22" r="12" fill="#48474a"/><ellipse cx="30" cy="50" rx="18" ry="12" fill="#48474a"/><text x="30" y="27" text-anchor="middle" fill="#acaaad" font-size="13" font-family="monospace">?</text></svg>`,
+  `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><rect width="60" height="60" fill="#19191c"/><circle cx="30" cy="22" r="12" fill="#3e65ff" opacity="0.5"/><ellipse cx="30" cy="50" rx="18" ry="12" fill="#3e65ff" opacity="0.3"/><text x="30" y="27" text-anchor="middle" fill="#97a9ff" font-size="12" font-family="monospace">★</text></svg>`,
+  `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><rect width="60" height="60" fill="#131315"/><circle cx="30" cy="22" r="12" fill="#6a0baa" opacity="0.6"/><ellipse cx="30" cy="50" rx="18" ry="12" fill="#6a0baa" opacity="0.4"/><text x="30" y="27" text-anchor="middle" fill="#c57eff" font-size="12" font-family="monospace">◆</text></svg>`,
+  `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><rect width="60" height="60" fill="#1a1508"/><circle cx="30" cy="22" r="12" fill="#635200" opacity="0.7"/><ellipse cx="30" cy="50" rx="18" ry="12" fill="#635200" opacity="0.5"/><text x="30" y="27" text-anchor="middle" fill="#ffe484" font-size="12" font-family="monospace">⚡</text></svg>`,
+  `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><rect width="60" height="60" fill="#1a0a0c"/><circle cx="30" cy="22" r="12" fill="#a70138" opacity="0.6"/><ellipse cx="30" cy="50" rx="18" ry="12" fill="#a70138" opacity="0.4"/><text x="30" y="27" text-anchor="middle" fill="#ff6e84" font-size="12" font-family="monospace">✦</text></svg>`,
 ];
 
-// ═══════════════════════════════════════════════════════════
-//  LOBBY UI
-// ═══════════════════════════════════════════════════════════
-let currentTab = 'join';
-let selectedMaxPlayers = 10;
-
-function setTab(tab) {
-  currentTab = tab;
-  document.getElementById('tab-join').className = tab === 'join'
-    ? 'flex-1 py-2.5 text-sm font-bold rounded-lg transition-all duration-200 bg-surface-bright text-on-surface'
-    : 'flex-1 py-2.5 text-sm font-bold rounded-lg transition-all duration-200 text-on-surface-variant';
-  document.getElementById('tab-create').className = tab === 'create'
-    ? 'flex-1 py-2.5 text-sm font-bold rounded-lg transition-all duration-200 bg-surface-bright text-on-surface'
-    : 'flex-1 py-2.5 text-sm font-bold rounded-lg transition-all duration-200 text-on-surface-variant';
-  document.getElementById('form-join').classList.toggle('hidden', tab !== 'join');
-  document.getElementById('form-create').classList.toggle('hidden', tab !== 'create');
+// ══════════════════════════════════════════════════════
+//  SEEDED RNG (mulberry32)
+// ══════════════════════════════════════════════════════
+function mkRng(seed) {
+  return function() {
+    seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+    let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+function seededShuffle(arr, rng) {
+  for (let i = arr.length-1; i > 0; i--) {
+    const j = Math.floor(rng() * (i+1)); [arr[i],arr[j]] = [arr[j],arr[i]];
+  }
 }
 
+// ══════════════════════════════════════════════════════
+//  LOBBY
+// ══════════════════════════════════════════════════════
+let selectedMax = 10;
+function setTab(t) {
+  document.getElementById('tab-join').className   = t==='join'   ? 'flex-1 py-2.5 text-sm font-bold rounded-lg transition-all bg-surface-bright text-on-surface'   : 'flex-1 py-2.5 text-sm font-bold rounded-lg transition-all text-on-surface-variant';
+  document.getElementById('tab-create').className = t==='create' ? 'flex-1 py-2.5 text-sm font-bold rounded-lg transition-all bg-surface-bright text-on-surface' : 'flex-1 py-2.5 text-sm font-bold rounded-lg transition-all text-on-surface-variant';
+  document.getElementById('form-join').classList.toggle('hidden', t!=='join');
+  document.getElementById('form-create').classList.toggle('hidden', t!=='create');
+}
 function setMaxPlayers(n) {
-  selectedMaxPlayers = n;
-  document.getElementById('btn-max10').className = n === 10
-    ? 'flex-1 py-2.5 rounded-xl text-sm font-bold border-2 border-primary bg-primary/10 text-primary transition-all'
-    : 'flex-1 py-2.5 rounded-xl text-sm font-bold border-2 border-outline-variant text-on-surface-variant hover:border-primary hover:text-primary transition-all';
-  document.getElementById('btn-max20').className = n === 20
-    ? 'flex-1 py-2.5 rounded-xl text-sm font-bold border-2 border-primary bg-primary/10 text-primary transition-all'
-    : 'flex-1 py-2.5 rounded-xl text-sm font-bold border-2 border-outline-variant text-on-surface-variant hover:border-primary hover:text-primary transition-all';
+  selectedMax = n;
+  document.getElementById('btn-max10').className = n===10 ? 'flex-1 py-2.5 rounded-xl text-sm font-bold border-2 border-primary bg-primary/10 text-primary transition-all' : 'flex-1 py-2.5 rounded-xl text-sm font-bold border-2 border-outline-variant text-on-surface-variant hover:border-primary hover:text-primary transition-all';
+  document.getElementById('btn-max20').className = n===20 ? 'flex-1 py-2.5 rounded-xl text-sm font-bold border-2 border-primary bg-primary/10 text-primary transition-all' : 'flex-1 py-2.5 rounded-xl text-sm font-bold border-2 border-outline-variant text-on-surface-variant hover:border-primary hover:text-primary transition-all';
 }
-
 function joinRoom() {
-  const name = document.getElementById('join-name').value.trim();
-  const room = document.getElementById('join-room').value.trim().toUpperCase();
-  const appId = document.getElementById('join-appid').value.trim();
-  const token = document.getElementById('join-token').value.trim();
-  if (!name) return showToast('Enter your name');
-  if (!room) return showToast('Enter a room code');
-  if (!appId) return showToast('Enter your Agora App ID');
-  startGame(name, room, appId, token || '', 10);
+  const name=g('join-name').value.trim(), room=g('join-room').value.trim().toUpperCase(),
+        appId=g('join-appid').value.trim(), token=g('join-token').value.trim();
+  if(!name)  return toast('Enter your name');
+  if(!room)  return toast('Enter a room code');
+  if(!appId) return toast('Enter your Agora App ID');
+  startGame(name,room,appId,token||'',10,false);
 }
-
 function createRoom() {
-  const name = document.getElementById('create-name').value.trim();
-  const room = document.getElementById('create-room').value.trim().toUpperCase();
-  const appId = document.getElementById('create-appid').value.trim();
-  const token = document.getElementById('create-token').value.trim();
-  if (!name) return showToast('Enter your name');
-  if (!room) return showToast('Enter a room name');
-  if (!appId) return showToast('Enter your Agora App ID');
-  startGame(name, room, appId, token || '', selectedMaxPlayers);
+  const name=g('create-name').value.trim(), room=g('create-room').value.trim().toUpperCase(),
+        appId=g('create-appid').value.trim(), token=g('create-token').value.trim();
+  if(!name)  return toast('Enter your name');
+  if(!room)  return toast('Enter a room name');
+  if(!appId) return toast('Enter your Agora App ID');
+  startGame(name,room,appId,token||'',selectedMax,true);
 }
 
-// ═══════════════════════════════════════════════════════════
-//  AGORA SETUP
-// ═══════════════════════════════════════════════════════════
-async function startGame(userName, channelName, appId, token, maxPlayers) {
-  STATE.appId = appId;
-  STATE.token = token;
-  STATE.channelName = channelName;
-  STATE.userName = userName;
-  STATE.maxVideoPlayers = maxPlayers;
-
-  showToast('Connecting to ' + channelName + '...');
-
+// ══════════════════════════════════════════════════════
+//  STARTUP
+// ══════════════════════════════════════════════════════
+async function startGame(userName,channelName,appId,token,maxPlayers,asHost) {
+  Object.assign(S,{appId,token,channelName,userName,maxVideoPlayers:maxPlayers,isHost:asHost,
+    boardSeed:asHost?(Date.now()&0xFFFFFF):0, participants:[],cards:[],cardPositions:[],
+    flippedCards:[],currentTurnIdx:0,scores:{},canFlip:false,flipLock:false});
+  toast('Connecting…'); rtmDot('connecting');
   try {
-    STATE.client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
-    setupAgoraEvents();
+    // RTC
+    S.client = AgoraRTC.createClient({mode:'rtc',codec:'vp8'});
+    setupRtcEvents();
+    S.localUid = await S.client.join(appId,channelName,token,null);
+    S.myUid = String(S.localUid);
+    [S.localAudioTrack,S.localVideoTrack] = await AgoraRTC.createMicrophoneAndCameraTracks();
+    await S.client.publish([S.localAudioTrack,S.localVideoTrack]);
 
-    STATE.localUid = await STATE.client.join(appId, channelName, token, null);
-    STATE.myUid = STATE.localUid;
+    // RTM
+    S.rtmClient = AgoraRTM.createInstance(appId);
+    await S.rtmClient.login({uid:S.myUid, token:token||null});
+    S.rtmChannel = S.rtmClient.createChannel(channelName);
+    await S.rtmChannel.join();
+    setupRtmEvents();
+    rtmDot('connected');
 
-    // Create tracks
-    [STATE.localAudioTrack, STATE.localVideoTrack] = await AgoraRTC.createMicrophoneAndCameraTracks();
-    await STATE.client.publish([STATE.localAudioTrack, STATE.localVideoTrack]);
+    addParticipant(S.myUid,userName,false,false);
+    initScore(S.myUid,userName);
+    broadcast({type:'HELLO',uid:S.myUid,name:userName,maxPlayers});
 
-    // Add self as participant
-    addParticipant(STATE.localUid, userName, false, false);
-
-    // Switch to game screen
-    document.getElementById('lobby-screen').classList.add('hidden');
-    document.getElementById('game-screen').classList.remove('hidden');
-    document.getElementById('header-room').textContent = 'Room: ' + channelName;
-
-    // Start local video preview in a card once board is built
-    initScores(STATE.localUid, userName);
+    g('lobby-screen').classList.add('hidden');
+    g('game-screen').classList.remove('hidden');
+    g('header-room').textContent='Room: '+channelName;
     startTimer();
 
-    // Build initial board with self
-    rebuildBoard();
-    updateTurnBanner();
-    updateScorePanel();
-    updatePlayersPanel();
-
-    showToast('Joined ' + channelName + ' as ' + userName + '!');
-  } catch (err) {
-    console.error('Agora error:', err);
-    showToast('Error: ' + (err.message || err));
+    if(asHost) {
+      buildAndBroadcast();
+    } else {
+      broadcast({type:'REQUEST_STATE',uid:S.myUid});
+      buildBoard(); renderBoard();
+    }
+    updateTurnBanner(); updateScores(); updatePlayers();
+    toast('Joined '+channelName+' as '+userName+'!');
+  } catch(err) {
+    console.error(err); rtmDot('error'); toast('Error: '+(err.message||err));
   }
 }
 
-function setupAgoraEvents() {
-  STATE.client.on('user-published', async (user, mediaType) => {
-    await STATE.client.subscribe(user, mediaType);
-    const uid = user.uid;
+// ══════════════════════════════════════════════════════
+//  RTM
+// ══════════════════════════════════════════════════════
+function broadcast(obj) { S.rtmChannel?.sendMessage({text:JSON.stringify(obj)}).catch(()=>{}); }
+function sendTo(uid,obj) { S.rtmClient?.sendMessageToPeer({text:JSON.stringify(obj)},String(uid)).catch(()=>{}); }
 
-    if (!STATE.remoteUsers[uid]) STATE.remoteUsers[uid] = { user, videoTrack: null, audioTrack: null };
-    STATE.remoteUsers[uid].user = user;
-
-    if (mediaType === 'video') {
-      STATE.remoteUsers[uid].videoTrack = user.videoTrack;
-    }
-    if (mediaType === 'audio') {
-      STATE.remoteUsers[uid].audioTrack = user.audioTrack;
-      user.audioTrack.play();
-    }
-
-    // Add participant if not known
-    const currentVideoCount = STATE.participants.filter(p => !p.isPlaceholder && !p.isSpectator).length;
-    const isSpectator = currentVideoCount >= STATE.maxVideoPlayers;
-    const name = 'Player ' + String(uid).slice(-4);
-
-    if (!STATE.participants.find(p => p.uid === uid)) {
-      addParticipant(uid, name, false, isSpectator);
-      initScores(uid, name);
-    }
-
-    rebuildBoard();
-    renderVideoInCards();
-    updateTurnBanner();
-    updateScorePanel();
-    updatePlayersPanel();
-    showToast(name + (isSpectator ? ' joined (spectator)' : ' joined the game!'));
-  });
-
-  STATE.client.on('user-unpublished', (user, mediaType) => {
-    if (STATE.remoteUsers[user.uid]) {
-      if (mediaType === 'video') STATE.remoteUsers[user.uid].videoTrack = null;
-      if (mediaType === 'audio') STATE.remoteUsers[user.uid].audioTrack = null;
-    }
-    renderVideoInCards();
-  });
-
-  STATE.client.on('user-left', (user) => {
-    const uid = user.uid;
-    delete STATE.remoteUsers[uid];
-    const idx = STATE.participants.findIndex(p => p.uid === uid);
-    if (idx !== -1) {
-      const name = STATE.participants[idx].name;
-      STATE.participants.splice(idx, 1);
-      showToast(name + ' left the room');
-    }
-    rebuildBoard();
-    renderVideoInCards();
-    updateScorePanel();
-    updatePlayersPanel();
-    updateTurnBanner();
-  });
+function setupRtmEvents() {
+  S.rtmChannel.on('ChannelMessage',({text},from)=>{ try{onMsg(JSON.parse(text),from)}catch(e){} });
+  S.rtmClient.on('MessageFromPeer',({text},from)=>{ try{onMsg(JSON.parse(text),from)}catch(e){} });
+  S.rtmChannel.on('MemberLeft',uid=>{ peerLeft(uid); });
 }
 
-// ═══════════════════════════════════════════════════════════
-//  PARTICIPANTS & BOARD LOGIC
-// ═══════════════════════════════════════════════════════════
-function addParticipant(uid, name, isPlaceholder, isSpectator) {
-  if (STATE.participants.find(p => p.uid === uid)) return;
-  STATE.participants.push({ uid, name, isPlaceholder, isSpectator });
-}
+function onMsg(m,from) {
+  switch(m.type) {
 
-function initScores(uid, name) {
-  if (!STATE.scores[uid]) STATE.scores[uid] = { name, pairs: 0 };
-}
+    case 'HELLO': {
+      if(!S.participants.find(p=>p.uid===m.uid)) {
+        const vc=S.participants.filter(p=>!p.isSpectator&&!p.isPlaceholder).length;
+        const spec=vc>=S.maxVideoPlayers;
+        addParticipant(m.uid,m.name,false,spec);
+        initScore(m.uid,m.name);
+        updatePlayers(); updateScores();
+        toast(m.name+(spec?' joined (spectator)':' joined!'));
+        if(S.isHost&&!spec) { setTimeout(()=>buildAndBroadcast(),200); }
+      }
+      if(S.isHost) setTimeout(()=>sendFullState(m.uid),500);
+      break;
+    }
 
-function rebuildBoard() {
-  // Determine which participants get video cards
-  const videoParticipants = STATE.participants.filter(p => !p.isSpectator && !p.isPlaceholder);
-  const totalVideoSlots = STATE.maxVideoPlayers;
-  const boardSize = totalVideoSlots; // each video player gets 2 cards = 2*N, fill rest with placeholders
+    case 'REQUEST_STATE': {
+      if(S.isHost) sendFullState(m.uid);
+      break;
+    }
 
-  // We want exactly totalVideoSlots unique "sources" (real + placeholder), each appears twice
-  const sources = [...videoParticipants];
-  let phIdx = 0;
-  while (sources.length < totalVideoSlots) {
-    sources.push({ uid: 'ph_' + phIdx, name: 'Guest', isPlaceholder: true, isSpectator: false });
-    phIdx++;
+    case 'FULL_STATE': {
+      if(S.isHost) break;
+      S.boardSeed=m.seed; S.maxVideoPlayers=m.maxPlayers;
+      S.participants=m.participants; S.scores=m.scores; S.currentTurnIdx=m.currentTurnIdx;
+      S.cards=m.cards;
+      computeHive();
+      renderBoard();
+      S.canFlip=S.myUid===S.participants[S.currentTurnIdx]?.uid;
+      updateTurnBanner(); updateScores(); updatePlayers();
+      break;
+    }
+
+    case 'BOARD_INIT': {
+      if(S.isHost) break;
+      S.boardSeed=m.seed; S.maxVideoPlayers=m.maxPlayers;
+      S.participants=m.participants; S.scores={};
+      m.participants.forEach(p=>initScore(p.uid,p.name));
+      buildBoard(); renderBoard();
+      updateTurnBanner(); updateScores(); updatePlayers();
+      break;
+    }
+
+    case 'FLIP_REQUEST': {
+      if(!S.isHost) break;
+      const cur=S.participants[S.currentTurnIdx];
+      if(!cur||cur.uid!==m.uid) break;
+      if(S.flipLock||S.flippedCards.length>=2) break;
+      hostFlip(m.cardIdx);
+      break;
+    }
+
+    case 'CARD_FLIPPED': {
+      if(!S.isHost) applyFlip(m.cardIdx);
+      break;
+    }
+
+    case 'NO_MATCH': {
+      if(!S.isHost) applyNoMatch(m.i1,m.i2,m.next);
+      break;
+    }
+
+    case 'MATCH': {
+      if(!S.isHost) applyMatch(m.i1,m.i2,m.scorer,m.next);
+      break;
+    }
+
+    case 'GAME_OVER': {
+      if(!S.isHost) endGame();
+      break;
+    }
+
+    case 'RESET': {
+      if(S.isHost) break;
+      S.boardSeed=m.seed;
+      buildBoard();
+      Object.keys(S.scores).forEach(u=>S.scores[u].pairs=0);
+      S.currentTurnIdx=0; S.flippedCards=[]; S.flipLock=false;
+      S.canFlip=S.myUid===S.participants[0]?.uid;
+      renderBoard(); updateScores(); updateTurnBanner(); updateHeaderScore();
+      break;
+    }
+
+    case 'CHAT': {
+      appendChat(m.name,m.text,m.uid===S.myUid);
+      break;
+    }
   }
-
-  // Create pairs
-  let cards = [];
-  sources.forEach((src, i) => {
-    cards.push({ id: i * 2,     pairId: i, participantUid: src.uid, isPlaceholder: src.isPlaceholder, name: src.name, flipped: false, matched: false });
-    cards.push({ id: i * 2 + 1, pairId: i, participantUid: src.uid, isPlaceholder: src.isPlaceholder, name: src.name, flipped: false, matched: false });
-  });
-
-  // Preserve matched/flipped state from previous board
-  const oldCards = STATE.cards;
-  cards.forEach(c => {
-    const old = oldCards.find(o => o.pairId === c.pairId && o.id === c.id);
-    if (old) { c.flipped = old.flipped; c.matched = old.matched; }
-  });
-
-  // Shuffle only new cards (preserve positions where possible)
-  const wasEmpty = STATE.cards.length === 0;
-  if (wasEmpty) {
-    shuffleArray(cards);
-  }
-  STATE.cards = cards;
-
-  // Ensure currentTurnIdx is valid
-  if (STATE.currentTurnIdx >= STATE.participants.length) STATE.currentTurnIdx = 0;
-  STATE.canFlip = STATE.myUid === (STATE.participants[STATE.currentTurnIdx]?.uid);
-
-  renderBoard();
 }
 
+// ══════════════════════════════════════════════════════
+//  HOST HELPERS
+// ══════════════════════════════════════════════════════
+function buildAndBroadcast() {
+  buildBoard(); renderBoard();
+  broadcast({type:'BOARD_INIT',seed:S.boardSeed,maxPlayers:S.maxVideoPlayers,participants:S.participants});
+  updateTurnBanner(); updateScores(); updatePlayers();
+}
+
+function sendFullState(peerUid) {
+  sendTo(peerUid,{type:'FULL_STATE',seed:S.boardSeed,maxPlayers:S.maxVideoPlayers,
+    participants:S.participants,
+    cards:S.cards.map(c=>({id:c.id,pairId:c.pairId,participantUid:c.participantUid,
+      isPlaceholder:c.isPlaceholder,name:c.name,flipped:c.flipped,matched:c.matched})),
+    scores:S.scores, currentTurnIdx:S.currentTurnIdx});
+}
+
+function hostFlip(idx) {
+  broadcast({type:'CARD_FLIPPED',cardIdx:idx});
+  applyFlip(idx);
+}
+
+// ══════════════════════════════════════════════════════
+//  BOARD BUILD (seeded, deterministic)
+// ══════════════════════════════════════════════════════
+function buildBoard() {
+  const rng = mkRng(S.boardSeed);
+  const real = S.participants.filter(p=>!p.isSpectator&&!p.isPlaceholder);
+  const sources=[...real];
+  let ph=0;
+  while(sources.length<S.maxVideoPlayers) { sources.push({uid:'ph_'+ph,name:'Guest',isPlaceholder:true,isSpectator:false}); ph++; }
+  let cards=[];
+  sources.forEach((src,i)=>{
+    cards.push({id:i*2,  pairId:i,participantUid:src.uid,isPlaceholder:!!src.isPlaceholder,name:src.name,flipped:false,matched:false});
+    cards.push({id:i*2+1,pairId:i,participantUid:src.uid,isPlaceholder:!!src.isPlaceholder,name:src.name,flipped:false,matched:false});
+  });
+  seededShuffle(cards,rng);
+  S.cards=cards; S.flippedCards=[]; S.flipLock=false;
+  S.canFlip=S.myUid===S.participants[S.currentTurnIdx]?.uid;
+  computeHive();
+}
+
+// ══════════════════════════════════════════════════════
+//  HIVE LAYOUT
+// ══════════════════════════════════════════════════════
+function computeHive() {
+  const n=S.cards.length;
+  if(!n) return;
+  const rng=mkRng(S.boardSeed+9999);
+  const wrap=g('board-wrapper');
+  const W=wrap?wrap.clientWidth||800:800;
+  const H=wrap?wrap.clientHeight||500:500;
+
+  const cols=S.maxVideoPlayers<=10?6:8;
+  const cardSz=Math.min(Math.floor(W/(cols+0.9)),Math.floor(H/(Math.ceil(n/cols)+0.9)),118);
+  const gapX=cardSz*0.15, gapY=cardSz*0.2;
+  const cellW=cardSz+gapX, cellH=cardSz+gapY;
+  const rows=Math.ceil(n/cols);
+  const gridW=cols*cellW, gridH=rows*cellH;
+  const ox=Math.max(4,(W-gridW)/2), oy=Math.max(8,(H-gridH)/2);
+
+  S.cardPositions=S.cards.map((_,i)=>{
+    const col=i%cols, row=Math.floor(i/cols);
+    const hiveOff=(row%2)*cellW*0.48;
+    const jx=(rng()-0.5)*cardSz*0.30;
+    const jy=(rng()-0.5)*cardSz*0.30;
+    const rot=(rng()-0.5)*13;
+    return {x:ox+hiveOff+col*cellW+jx, y:oy+row*cellH+jy, w:cardSz, h:cardSz, rot};
+  });
+
+  const brd=g('board');
+  if(brd) {
+    const mx=Math.max(...S.cardPositions.map(p=>p.x+p.w))+20;
+    const my=Math.max(...S.cardPositions.map(p=>p.y+p.h))+20;
+    brd.style.width=Math.max(W,mx)+'px';
+    brd.style.height=Math.max(H,my)+'px';
+  }
+}
+
+// ══════════════════════════════════════════════════════
+//  RENDER BOARD
+// ══════════════════════════════════════════════════════
 function renderBoard() {
-  const board = document.getElementById('board');
-  const n = STATE.cards.length; // always 2*maxVideoPlayers
-  const cols = STATE.maxVideoPlayers === 20 ? 8 : 6; // nice grid
-  board.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
+  if(!S.cardPositions.length&&S.cards.length) computeHive();
+  const brd=g('board'); if(!brd) return;
+  brd.querySelectorAll('video').forEach(v=>{ if(v._ct) try{v._ct.stop()}catch(_){} });
+  brd.innerHTML='';
 
-  board.innerHTML = '';
-  STATE.cards.forEach((card, idx) => {
-    const div = document.createElement('div');
-    div.className = 'card-scene aspect-square';
-    div.id = 'card-' + idx;
+  S.cards.forEach((card,idx)=>{
+    const p=S.cardPositions[idx]||{x:0,y:0,w:80,h:80,rot:0};
+    const scene=document.createElement('div');
+    scene.className='card-scene'; scene.id='card-'+idx;
+    scene.style.cssText=`left:${p.x}px;top:${p.y}px;width:${p.w}px;height:${p.h}px;transform:rotate(${p.rot}deg);transition:transform 0.2s;z-index:1`;
+    scene.addEventListener('mouseenter',()=>{ scene.style.transform=`rotate(${p.rot}deg) scale(1.07) translateY(-3px)`; scene.style.zIndex='10'; });
+    scene.addEventListener('mouseleave',()=>{ scene.style.transform=`rotate(${p.rot}deg)`; scene.style.zIndex='1'; });
 
-    const inner = document.createElement('div');
-    inner.className = 'card-inner' + (card.flipped || card.matched ? ' flipped' : '') + (card.matched ? ' card-matched' : '');
+    const inner=document.createElement('div');
+    inner.className='card-inner'+(card.flipped||card.matched?' flipped':'')+(card.matched?' card-matched':'');
 
-    // Front (face-down)
-    const front = document.createElement('div');
-    front.className = 'card-front flex items-center justify-center cursor-pointer border border-primary/15 hover:border-primary/40 transition-colors';
-    if (!card.matched) {
-      front.onclick = () => flipCard(idx);
-    }
-    front.innerHTML = `<span class="material-symbols-outlined text-primary/25 text-2xl" style="font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24">electric_bolt</span>`;
+    const front=document.createElement('div');
+    front.className='card-front flex items-center justify-center cursor-pointer border border-primary/15 hover:border-primary/50 transition-colors';
+    if(!card.matched) front.onclick=()=>requestFlip(idx);
+    front.innerHTML=`<span class="material-symbols-outlined text-primary/25" style="font-size:${Math.max(14,p.w*0.3)}px;font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24">electric_bolt</span>`;
 
-    // Back (face-up, shows video or placeholder)
-    const back = document.createElement('div');
-    back.className = 'card-back video-container';
-    back.id = 'card-back-' + idx;
-    if (card.matched) {
-      back.classList.add('border-2', 'border-primary');
-    }
+    const back=document.createElement('div');
+    back.className='card-back video-container'+(card.matched?' border-2 border-primary':'');
+    back.id='card-back-'+idx;
 
-    // Name label
-    const label = document.createElement('div');
-    label.className = 'absolute bottom-1 left-1 bg-black/70 px-1.5 rounded text-[8px] font-bold text-white uppercase tracking-wide z-10';
-    label.textContent = card.name.slice(0, 10);
-    back.appendChild(label);
+    const lbl=document.createElement('div');
+    lbl.className='absolute bottom-0.5 left-0.5 bg-black/70 px-1 rounded text-white uppercase font-bold z-10';
+    lbl.style.fontSize=Math.max(7,p.w*0.09)+'px';
+    lbl.textContent=card.name.slice(0,10);
+    back.appendChild(lbl);
 
-    // Spectator badge if applicable
-    const participant = STATE.participants.find(p => p.uid === card.participantUid);
-    if (participant?.isSpectator) {
-      const badge = document.createElement('div');
-      badge.className = 'spectator-badge';
-      badge.textContent = 'Spec';
-      back.appendChild(badge);
-    }
+    const part=S.participants.find(pp=>pp.uid===card.participantUid);
+    if(part?.isSpectator) { const b=document.createElement('div'); b.className='spectator-badge'; b.textContent='Spec'; back.appendChild(b); }
 
-    inner.appendChild(front);
-    inner.appendChild(back);
-    div.appendChild(inner);
-    board.appendChild(div);
+    inner.appendChild(front); inner.appendChild(back);
+    scene.appendChild(inner); brd.appendChild(scene);
   });
-
-  // Render videos after DOM is ready
-  setTimeout(() => renderVideoInCards(), 50);
+  setTimeout(()=>renderVideos(),60);
   updateCardsLeft();
 }
 
-// A single MediaStreamTrack can only be attached to one <video> at a time.
-// To show the same stream in two cards we clone the underlying track and
-// create an independent MediaStream for each card element.
-function playTrackInContainer(agoraTrack, container) {
-  const rawTrack = agoraTrack.getMediaStreamTrack ? agoraTrack.getMediaStreamTrack() : null;
-  const video = document.createElement('video');
-  video.autoplay = true;
-  video.muted = true;
-  video.playsInline = true;
-  video.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;';
-  if (rawTrack) {
-    const cloned = rawTrack.clone();
-    video.srcObject = new MediaStream([cloned]);
-    video._clonedTrack = cloned; // keep reference so we can stop it later
-  } else {
-    // Fallback: let Agora manage a temporary div and steal its video element
-    const tmp = document.createElement('div');
-    tmp.style.display = 'none';
-    document.body.appendChild(tmp);
-    agoraTrack.play(tmp);
-    const src = tmp.querySelector('video');
-    if (src) video.srcObject = src.srcObject;
-    document.body.removeChild(tmp);
-  }
-  container.appendChild(video);
-  video.play().catch(() => {});
+// ══════════════════════════════════════════════════════
+//  VIDEO — cloned tracks
+// ══════════════════════════════════════════════════════
+function playTrack(agoraTrack,container) {
+  const raw=agoraTrack.getMediaStreamTrack?agoraTrack.getMediaStreamTrack():null;
+  const v=document.createElement('video');
+  v.autoplay=true; v.muted=true; v.playsInline=true;
+  v.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;';
+  if(raw) { const cl=raw.clone(); v.srcObject=new MediaStream([cl]); v._ct=cl; }
+  container.appendChild(v); v.play().catch(()=>{});
 }
 
-function renderVideoInCards() {
-  STATE.cards.forEach((card, idx) => {
-    const back = document.getElementById('card-back-' + idx);
-    if (!back) return;
+function renderVideos() {
+  S.cards.forEach((card,idx)=>{
+    const back=g('card-back-'+idx); if(!back) return;
+    back.querySelectorAll('video').forEach(v=>{ if(v._ct) try{v._ct.stop()}catch(_){} });
+    back.querySelectorAll('.cvw').forEach(el=>el.remove());
+    const wrap=document.createElement('div'); wrap.className='cvw absolute inset-0';
 
-    // Stop any cloned tracks before wiping the DOM
-    back.querySelectorAll('video').forEach(v => {
-      if (v._clonedTrack) { try { v._clonedTrack.stop(); } catch(_) {} }
-    });
-    // Remove previous content wrappers (keep name label and spectator badge)
-    back.querySelectorAll('.card-video-wrap').forEach(el => el.remove());
-
-    const wrap = document.createElement('div');
-    wrap.className = 'card-video-wrap absolute inset-0';
-
-    if (card.isPlaceholder) {
-      const phIdx = parseInt(card.pairId) % PLACEHOLDERS.length;
-      wrap.innerHTML = PLACEHOLDERS[phIdx];
-      const svg = wrap.querySelector('svg');
-      if (svg) { svg.setAttribute('width', '100%'); svg.setAttribute('height', '100%'); }
-      back.insertBefore(wrap, back.firstChild);
-      return;
+    if(card.isPlaceholder) {
+      const pi=parseInt(card.pairId)%PH.length;
+      wrap.innerHTML=PH[pi];
+      const sv=wrap.querySelector('svg');
+      if(sv){sv.setAttribute('width','100%');sv.setAttribute('height','100%');}
+      back.insertBefore(wrap,back.firstChild); return;
     }
 
-    const uid = card.participantUid;
-
-    if (uid === STATE.myUid && STATE.localVideoTrack) {
-      playTrackInContainer(STATE.localVideoTrack, wrap);
-      back.insertBefore(wrap, back.firstChild);
-      return;
-    }
-
-    const remote = STATE.remoteUsers[uid];
-    if (remote?.videoTrack) {
-      playTrackInContainer(remote.videoTrack, wrap);
-      back.insertBefore(wrap, back.firstChild);
-    } else {
-      wrap.className += ' flex items-center justify-center bg-surface-container';
-      wrap.innerHTML = `<span class="material-symbols-outlined text-on-surface-variant text-3xl">person</span>`;
-      back.insertBefore(wrap, back.firstChild);
+    const uid=card.participantUid;
+    if(uid===S.myUid&&S.localVideoTrack) { playTrack(S.localVideoTrack,wrap); back.insertBefore(wrap,back.firstChild); return; }
+    const rem=S.remoteUsers[uid];
+    if(rem?.videoTrack) { playTrack(rem.videoTrack,wrap); back.insertBefore(wrap,back.firstChild); }
+    else {
+      wrap.className+=' flex items-center justify-center bg-surface-container';
+      wrap.innerHTML=`<span class="material-symbols-outlined text-on-surface-variant" style="font-size:28px">person</span>`;
+      back.insertBefore(wrap,back.firstChild);
     }
   });
 }
 
-// ═══════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 //  GAME LOGIC
-// ═══════════════════════════════════════════════════════════
-function flipCard(idx) {
-  const card = STATE.cards[idx];
-  if (!STATE.canFlip) { showToast("It's not your turn!"); return; }
-  if (card.flipped || card.matched) return;
-  if (STATE.flippedCards.length >= 2) return;
-  if (STATE.flipLock) return;
+// ══════════════════════════════════════════════════════
+function requestFlip(idx) {
+  const card=S.cards[idx];
+  if(!S.canFlip) { toast("It's not your turn!"); return; }
+  if(card.flipped||card.matched) return;
+  if(S.flippedCards.length>=2||S.flipLock) return;
+  if(S.isHost) { hostFlip(idx); }
+  else { broadcast({type:'FLIP_REQUEST',cardIdx:idx,uid:S.myUid}); S.flipLock=true; setTimeout(()=>{S.flipLock=false;},2000); }
+}
 
-  card.flipped = true;
-  STATE.flippedCards.push(idx);
-
-  const inner = document.getElementById('card-' + idx)?.querySelector('.card-inner');
-  if (inner) inner.classList.add('flipped');
-  renderVideoInCards();
-
-  if (STATE.flippedCards.length === 2) {
-    STATE.canFlip = false;
-    STATE.flipLock = true;
-    setTimeout(() => checkMatch(), 1000);
+function applyFlip(idx) {
+  const card=S.cards[idx]; if(!card||card.matched) return;
+  card.flipped=true; S.flippedCards.push(idx); S.flipLock=true;
+  g('card-'+idx)?.querySelector('.card-inner')?.classList.add('flipped');
+  renderVideos();
+  if(S.flippedCards.length===2) {
+    S.canFlip=false;
+    if(S.isHost) setTimeout(()=>hostCheckMatch(),1100);
   }
 }
 
-function checkMatch() {
-  const [i1, i2] = STATE.flippedCards;
-  const c1 = STATE.cards[i1];
-  const c2 = STATE.cards[i2];
-
-  if (c1.pairId === c2.pairId) {
-    // MATCH!
-    c1.matched = true;
-    c2.matched = true;
-    const currentPlayer = STATE.participants[STATE.currentTurnIdx];
-    if (currentPlayer) {
-      if (!STATE.scores[currentPlayer.uid]) STATE.scores[currentPlayer.uid] = { name: currentPlayer.name, pairs: 0 };
-      STATE.scores[currentPlayer.uid].pairs++;
-    }
-    // Add matched styling
-    [i1, i2].forEach(i => {
-      const inner = document.getElementById('card-' + i)?.querySelector('.card-inner');
-      if (inner) inner.classList.add('card-matched');
-      const back = document.getElementById('card-back-' + i);
-      if (back) back.classList.add('border-2', 'border-primary');
-    });
-
-    STATE.flippedCards = [];
-    STATE.flipLock = false;
-
-    // Current player gets another turn
-    STATE.canFlip = STATE.myUid === (STATE.participants[STATE.currentTurnIdx]?.uid);
-
-    if (STATE.myUid === STATE.participants[STATE.currentTurnIdx]?.uid) {
-      bumpScore();
-      showToast('✨ Match! +1 Pair');
-    }
-
-    updateScorePanel();
-    updateHeaderScore();
-    updateCardsLeft();
-
-    // Check win condition
-    if (STATE.cards.every(c => c.matched)) {
-      endGame();
-      return;
-    }
+function hostCheckMatch() {
+  const [i1,i2]=S.flippedCards;
+  const c1=S.cards[i1],c2=S.cards[i2];
+  const cur=S.participants[S.currentTurnIdx];
+  if(c1.pairId===c2.pairId) {
+    broadcast({type:'MATCH',i1,i2,scorer:cur?.uid,next:S.currentTurnIdx});
+    applyMatch(i1,i2,cur?.uid,S.currentTurnIdx);
+    if(S.cards.every(c=>c.matched)) setTimeout(()=>{ broadcast({type:'GAME_OVER'}); endGame(); },600);
   } else {
-    // NO match — flip back
-    setTimeout(() => {
-      c1.flipped = false;
-      c2.flipped = false;
-      [i1, i2].forEach(i => {
-        const inner = document.getElementById('card-' + i)?.querySelector('.card-inner');
-        if (inner) inner.classList.remove('flipped');
-      });
-      STATE.flippedCards = [];
-      STATE.flipLock = false;
-
-      // Next player's turn
-      STATE.currentTurnIdx = (STATE.currentTurnIdx + 1) % Math.max(STATE.participants.length, 1);
-      STATE.canFlip = STATE.myUid === (STATE.participants[STATE.currentTurnIdx]?.uid);
-      updateTurnBanner();
-    }, 600);
+    const next=(S.currentTurnIdx+1)%Math.max(S.participants.length,1);
+    broadcast({type:'NO_MATCH',i1,i2,next});
+    applyNoMatch(i1,i2,next);
   }
-
-  updateTurnBanner();
 }
+
+function applyMatch(i1,i2,scorer,next) {
+  S.cards[i1].matched=true; S.cards[i2].matched=true;
+  if(scorer&&S.scores[scorer]) S.scores[scorer].pairs++;
+  [i1,i2].forEach(i=>{
+    g('card-'+i)?.querySelector('.card-inner')?.classList.add('card-matched');
+    g('card-back-'+i)?.classList.add('border-2','border-primary');
+  });
+  S.flippedCards=[]; S.flipLock=false; S.currentTurnIdx=next;
+  S.canFlip=S.myUid===S.participants[next]?.uid;
+  if(scorer===S.myUid){bumpScore();toast('✨ Match! +1 Pair');}
+  updateScores(); updateHeaderScore(); updateCardsLeft(); updateTurnBanner();
+}
+
+function applyNoMatch(i1,i2,next) {
+  setTimeout(()=>{
+    if(S.cards[i1]) S.cards[i1].flipped=false;
+    if(S.cards[i2]) S.cards[i2].flipped=false;
+    [i1,i2].forEach(i=>{ g('card-'+i)?.querySelector('.card-inner')?.classList.remove('flipped'); });
+    S.flippedCards=[]; S.flipLock=false; S.currentTurnIdx=next;
+    S.canFlip=S.myUid===S.participants[next]?.uid;
+    updateTurnBanner();
+  },700);
+}
+
+// ══════════════════════════════════════════════════════
+//  RTC EVENTS
+// ══════════════════════════════════════════════════════
+function setupRtcEvents() {
+  S.client.on('user-published',async(user,mt)=>{
+    await S.client.subscribe(user,mt);
+    const uid=user.uid;
+    if(!S.remoteUsers[uid]) S.remoteUsers[uid]={user,videoTrack:null,audioTrack:null};
+    if(mt==='video') S.remoteUsers[uid].videoTrack=user.videoTrack;
+    if(mt==='audio'){ S.remoteUsers[uid].audioTrack=user.audioTrack; user.audioTrack.play(); }
+    renderVideos();
+  });
+  S.client.on('user-unpublished',(user,mt)=>{
+    if(S.remoteUsers[user.uid]){
+      if(mt==='video') S.remoteUsers[user.uid].videoTrack=null;
+      if(mt==='audio') S.remoteUsers[user.uid].audioTrack=null;
+    }
+    renderVideos();
+  });
+  S.client.on('user-left',user=>{ delete S.remoteUsers[user.uid]; renderVideos(); });
+}
+
+function peerLeft(uid) {
+  const idx=S.participants.findIndex(p=>p.uid===uid);
+  if(idx===-1) return;
+  const name=S.participants[idx].name;
+  S.participants.splice(idx,1);
+  toast(name+' left');
+  if(S.currentTurnIdx>=S.participants.length) S.currentTurnIdx=0;
+  S.canFlip=S.myUid===S.participants[S.currentTurnIdx]?.uid;
+  updatePlayers(); updateScores(); updateTurnBanner();
+}
+
+// ══════════════════════════════════════════════════════
+//  END / RESET
+// ══════════════════════════════════════════════════════
+function endGame() {
+  clearInterval(S.timerInterval);
+  const sorted=Object.entries(S.scores).sort((a,b)=>b[1].pairs-a[1].pairs);
+  const ov=document.createElement('div');
+  ov.className='fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center fade-in';
+  ov.innerHTML=`<div class="bg-surface-container border border-outline-variant rounded-2xl p-8 max-w-sm w-full mx-4 text-center slide-up">
+    <div class="text-5xl mb-4">🏆</div>
+    <h2 class="font-headline font-black text-2xl text-tertiary uppercase mb-1">Game Over!</h2>
+    <p class="text-on-surface-variant text-sm mb-6">All pairs found</p>
+    <div class="space-y-2 mb-6">
+      ${sorted.slice(0,5).map((e,i)=>`<div class="flex justify-between items-center px-4 py-2 rounded-xl ${i===0?'bg-tertiary-container text-on-tertiary':'bg-surface-container-high text-on-surface'}"><span class="font-bold text-sm">${['🥇','🥈','🥉','4.','5.'][i]} ${e[1].name}</span><span class="font-black text-sm">${e[1].pairs} pairs</span></div>`).join('')}
+    </div>
+    ${S.isHost?`<button onclick="this.closest('.fixed').remove();hostReset();" class="w-full py-3 bg-gradient-to-r from-primary to-primary-container text-on-primary font-black rounded-xl uppercase tracking-wider text-sm">Play Again</button>`:'<p class="text-on-surface-variant text-sm">Waiting for host to restart…</p>'}
+  </div>`;
+  document.body.appendChild(ov);
+}
+
+function hostReset() {
+  if(!S.isHost) return;
+  S.boardSeed=Date.now()&0xFFFFFF;
+  Object.keys(S.scores).forEach(u=>S.scores[u].pairs=0);
+  S.currentTurnIdx=0;
+  buildBoard(); renderBoard();
+  updateScores(); updateTurnBanner(); updateHeaderScore();
+  startTimer();
+  broadcast({type:'RESET',seed:S.boardSeed});
+}
+
+// ══════════════════════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════════════════════
+const g=id=>document.getElementById(id);
+
+function addParticipant(uid,name,isPlaceholder,isSpectator) {
+  if(!S.participants.find(p=>p.uid===uid)) S.participants.push({uid,name,isPlaceholder,isSpectator});
+}
+function initScore(uid,name) { if(!S.scores[uid]) S.scores[uid]={name,pairs:0}; }
 
 function updateTurnBanner() {
-  const banner = document.getElementById('turn-banner');
-  const turnText = document.getElementById('turn-text');
-  const turnSub = document.getElementById('turn-sub');
-
-  if (!STATE.participants.length) {
-    turnText.textContent = 'Waiting for players...';
-    turnSub.textContent = 'Invite friends to start';
-    return;
-  }
-
-  const current = STATE.participants[STATE.currentTurnIdx];
-  if (!current) return;
-
-  const isMe = current.uid === STATE.myUid;
-  if (isMe) {
-    turnText.textContent = '⚡ YOUR TURN';
-    turnSub.textContent = 'Click two cards to find a match!';
-    banner.className = 'mb-3 rounded-xl px-5 py-3 turn-pulse flex items-center justify-between bg-tertiary-container text-on-tertiary flex-shrink-0';
-  } else {
-    turnText.textContent = current.name.toUpperCase() + "'S TURN";
-    turnSub.textContent = 'Watch and wait...';
-    banner.className = 'mb-3 rounded-xl px-5 py-3 flex items-center justify-between bg-surface-container text-on-surface-variant flex-shrink-0';
-  }
+  const ban=g('turn-banner'),tt=g('turn-text'),ts=g('turn-sub');
+  if(!ban) return;
+  if(!S.participants.length){ tt.textContent='Waiting for players…'; ts.textContent='Invite friends to start'; return; }
+  const cur=S.participants[S.currentTurnIdx]; if(!cur) return;
+  const me=cur.uid===S.myUid;
+  tt.textContent=me?'⚡ YOUR TURN':cur.name.toUpperCase()+"'S TURN";
+  ts.textContent=me?'Click two cards to find a match!':'Watch and wait…';
+  ban.className='mb-3 rounded-xl px-5 py-3 '+(me?'turn-pulse bg-tertiary-container text-on-tertiary':'bg-surface-container text-on-surface-variant')+' flex items-center justify-between flex-shrink-0';
 }
 
 function updateCardsLeft() {
-  const remaining = STATE.cards.filter(c => !c.matched).length / 2;
-  const total = STATE.cards.length / 2;
-  const el = document.getElementById('cards-left');
-  if (el) el.textContent = remaining + '/' + total + ' pairs left';
+  const rem=S.cards.filter(c=>!c.matched).length/2, tot=S.cards.length/2;
+  const el=g('cards-left'); if(el) el.textContent=rem+'/'+tot+' pairs left';
 }
 
-function endGame() {
-  clearInterval(STATE.timerInterval);
-  const sorted = Object.entries(STATE.scores).sort((a, b) => b[1].pairs - a[1].pairs);
-  const winner = sorted[0];
-  showToast('🏆 Game Over! Winner: ' + (winner ? winner[1].name : '—'));
-
-  // Show victory overlay
-  const overlay = document.createElement('div');
-  overlay.className = 'fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center fade-in';
-  overlay.innerHTML = `
-    <div class="bg-surface-container border border-outline-variant rounded-2xl p-8 max-w-sm w-full mx-4 text-center slide-up">
-      <div class="text-5xl mb-4">🏆</div>
-      <h2 class="font-headline font-black text-2xl text-tertiary uppercase mb-1">Game Over!</h2>
-      <p class="text-on-surface-variant text-sm mb-6">All pairs found</p>
-      <div class="space-y-2 mb-6">
-        ${sorted.slice(0, 5).map((e, i) => `
-          <div class="flex justify-between items-center px-4 py-2 rounded-xl ${i === 0 ? 'bg-tertiary-container text-on-tertiary' : 'bg-surface-container-high text-on-surface'}">
-            <span class="font-bold text-sm">${['🥇','🥈','🥉','4.','5.'][i]} ${e[1].name}</span>
-            <span class="font-black text-sm">${e[1].pairs} pairs</span>
-          </div>`).join('')}
+function updateScores() {
+  const panel=g('sp-scores'); if(!panel) return;
+  const sorted=Object.entries(S.scores).sort((a,b)=>b[1].pairs-a[1].pairs);
+  panel.innerHTML=sorted.map((e,i)=>{
+    const me=e[0]===S.myUid, cur=S.participants[S.currentTurnIdx]?.uid===e[0];
+    return `<div class="flex items-center justify-between px-3 py-2.5 rounded-xl ${me?'bg-primary/10 border border-primary/20':'hover:bg-surface-container-high'} transition-colors">
+      <div class="flex items-center gap-2.5">
+        <div class="w-6 h-6 rounded-full ${me?'bg-primary text-on-primary':'bg-surface-container-highest text-on-surface-variant'} flex items-center justify-center text-[10px] font-black">${i+1}</div>
+        <div><div class="text-xs font-bold ${me?'text-primary':'text-on-surface'}">${e[1].name}${me?' (You)':''}</div>${cur?'<div class="text-[9px] text-tertiary font-bold">● PLAYING</div>':''}</div>
       </div>
-      <button onclick="this.closest('.fixed').remove(); resetGame();"
-        class="w-full py-3 bg-gradient-to-r from-primary to-primary-container text-on-primary font-black rounded-xl uppercase tracking-wider text-sm">
-        Play Again
-      </button>
+      <span class="text-xs font-black ${me?'text-primary':'text-on-surface-variant'}">${e[1].pairs}</span>
     </div>`;
-  document.body.appendChild(overlay);
-}
-
-function resetGame() {
-  // Reset scores, re-shuffle
-  Object.keys(STATE.scores).forEach(uid => { STATE.scores[uid].pairs = 0; });
-  STATE.currentTurnIdx = 0;
-  STATE.flippedCards = [];
-  STATE.flipLock = false;
-  STATE.canFlip = STATE.myUid === STATE.participants[0]?.uid;
-  STATE.timerStart = Date.now();
-  STATE.cards.forEach(c => { c.flipped = false; c.matched = false; });
-  shuffleArray(STATE.cards);
-  // Re-assign IDs
-  STATE.cards.forEach((c, i) => { c.id = i; });
-  renderBoard();
-  updateScorePanel();
-  updateTurnBanner();
-  updateHeaderScore();
-}
-
-// ═══════════════════════════════════════════════════════════
-//  UI HELPERS
-// ═══════════════════════════════════════════════════════════
-function updateScorePanel() {
-  const panel = document.getElementById('sp-scores');
-  const sorted = Object.entries(STATE.scores).sort((a, b) => b[1].pairs - a[1].pairs);
-  panel.innerHTML = sorted.map((e, i) => {
-    const isMe = e[0] == STATE.myUid;
-    const isCurrentTurn = STATE.participants[STATE.currentTurnIdx]?.uid == e[0];
-    return `
-      <div class="flex items-center justify-between px-3 py-2.5 rounded-xl ${isMe ? 'bg-primary/10 border border-primary/20' : 'hover:bg-surface-container-high'} transition-colors">
-        <div class="flex items-center gap-2.5">
-          <div class="w-6 h-6 rounded-full ${isMe ? 'bg-primary text-on-primary' : 'bg-surface-container-highest text-on-surface-variant'} flex items-center justify-center text-[10px] font-black">${i+1}</div>
-          <div>
-            <div class="text-xs font-bold ${isMe ? 'text-primary' : 'text-on-surface'}">${e[1].name}${isMe ? ' (You)' : ''}</div>
-            ${isCurrentTurn ? '<div class="text-[9px] text-tertiary font-bold">● PLAYING</div>' : ''}
-          </div>
-        </div>
-        <span class="text-xs font-black ${isMe ? 'text-primary' : 'text-on-surface-variant'}">${e[1].pairs}</span>
-      </div>`;
   }).join('');
 }
 
-function updatePlayersPanel() {
-  const panel = document.getElementById('sp-players');
-  panel.innerHTML = STATE.participants.map(p => `
+function updatePlayers() {
+  const panel=g('sp-players'); if(!panel) return;
+  panel.innerHTML=S.participants.map(p=>`
     <div class="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-surface-container-high transition-colors">
-      <div class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center text-xs text-on-surface-variant font-bold flex-shrink-0">
-        ${p.name.slice(0, 2).toUpperCase()}
-      </div>
+      <div class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center text-xs text-on-surface-variant font-bold flex-shrink-0">${p.name.slice(0,2).toUpperCase()}</div>
       <div class="flex-1 min-w-0">
-        <div class="text-xs font-bold text-on-surface truncate">${p.name}${p.uid == STATE.myUid ? ' (You)' : ''}</div>
-        <div class="text-[9px] text-on-surface-variant uppercase tracking-wider">${p.isSpectator ? '👁 Spectator' : p.isPlaceholder ? '📷 Placeholder' : '🎥 Player'}</div>
+        <div class="text-xs font-bold text-on-surface truncate">${p.name}${p.uid===S.myUid?' (You)':''}</div>
+        <div class="text-[9px] text-on-surface-variant uppercase tracking-wider">${p.isSpectator?'👁 Spectator':p.isPlaceholder?'📷 Placeholder':'🎥 Player'}</div>
       </div>
     </div>`).join('');
 }
 
 function updateHeaderScore() {
-  const my = STATE.scores[STATE.myUid];
-  const score = document.getElementById('header-score');
-  if (my && score) score.textContent = 'Score: ' + my.pairs;
+  const my=S.scores[S.myUid],el=g('header-score');
+  if(my&&el) el.textContent='Score: '+my.pairs;
 }
-
 function bumpScore() {
-  const el = document.getElementById('header-score');
-  if (el) { el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); }
+  const el=g('header-score');
+  if(el){el.classList.remove('bump');void el.offsetWidth;el.classList.add('bump');}
   updateHeaderScore();
-  setTimeout(() => el?.classList.remove('bump'), 300);
+  setTimeout(()=>el?.classList.remove('bump'),300);
 }
-
-function showSidePanel(panel) {
-  document.getElementById('sp-scores').classList.toggle('hidden', panel !== 'scores');
-  document.getElementById('sp-players').classList.toggle('hidden', panel !== 'players');
-  document.getElementById('sp-scores-btn').className = panel === 'scores'
-    ? 'flex-1 py-2.5 text-xs font-bold uppercase tracking-widest text-primary border-b-2 border-primary'
-    : 'flex-1 py-2.5 text-xs font-bold uppercase tracking-widest text-on-surface-variant';
-  document.getElementById('sp-players-btn').className = panel === 'players'
-    ? 'flex-1 py-2.5 text-xs font-bold uppercase tracking-widest text-primary border-b-2 border-primary'
-    : 'flex-1 py-2.5 text-xs font-bold uppercase tracking-widest text-on-surface-variant';
+function showSidePanel(p) {
+  g('sp-scores').classList.toggle('hidden',p!=='scores');
+  g('sp-players').classList.toggle('hidden',p!=='players');
+  g('sp-scores-btn').className=p==='scores'?'flex-1 py-2.5 text-xs font-bold uppercase tracking-widest text-primary border-b-2 border-primary':'flex-1 py-2.5 text-xs font-bold uppercase tracking-widest text-on-surface-variant';
+  g('sp-players-btn').className=p==='players'?'flex-1 py-2.5 text-xs font-bold uppercase tracking-widest text-primary border-b-2 border-primary':'flex-1 py-2.5 text-xs font-bold uppercase tracking-widest text-on-surface-variant';
 }
-
-let sidebarVisible = true;
+let sidebarOpen=true;
 function toggleSidebar() {
-  sidebarVisible = !sidebarVisible;
-  const sidebar = document.getElementById('sidebar');
-  sidebar.style.width = sidebarVisible ? '' : '0';
-  sidebar.style.overflow = sidebarVisible ? '' : 'hidden';
+  sidebarOpen=!sidebarOpen;
+  const sb=g('sidebar'); sb.style.width=sidebarOpen?'':'0'; sb.style.overflow=sidebarOpen?'':'hidden';
 }
-
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  clearTimeout(t._timeout);
-  t._timeout = setTimeout(() => t.classList.remove('show'), 3000);
+function toast(msg) {
+  const t=g('toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),3000);
 }
-
 function copyRoomCode() {
-  const base = window.location.href.split('?')[0];
-  const url = new URL(base);
-  url.searchParams.set('room', STATE.channelName);
-  url.searchParams.set('id', STATE.appId);
-  if (STATE.token) url.searchParams.set('t', STATE.token);
-  navigator.clipboard.writeText(url.toString()).then(() => showToast('Invite link copied!'));
+  const url=new URL(window.location.href.split('?')[0]);
+  url.searchParams.set('room',S.channelName); url.searchParams.set('id',S.appId);
+  if(S.token) url.searchParams.set('t',S.token);
+  navigator.clipboard.writeText(url.toString()).then(()=>toast('Invite link copied!'));
+}
+function rtmDot(status) {
+  const d=g('rtm-dot'); if(d){d.className='';if(status)d.classList.add(status);d.title='RTM: '+status;}
 }
 
-// Timer
+// ══════════════════════════════════════════════════════
+//  TIMER
+// ══════════════════════════════════════════════════════
 function startTimer() {
-  STATE.timerStart = Date.now();
-  STATE.timerInterval = setInterval(() => {
-    const elapsed = Math.floor((Date.now() - STATE.timerStart) / 1000);
-    const m = Math.floor(elapsed / 60).toString().padStart(2, '0');
-    const s = (elapsed % 60).toString().padStart(2, '0');
-    const el = document.getElementById('header-timer');
-    if (el) el.textContent = m + ':' + s;
-  }, 1000);
+  clearInterval(S.timerInterval); S.timerStart=Date.now();
+  S.timerInterval=setInterval(()=>{
+    const s=Math.floor((Date.now()-S.timerStart)/1000);
+    const el=g('header-timer');
+    if(el) el.textContent=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+  },1000);
 }
 
-// ═══════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 //  MEDIA CONTROLS
-// ═══════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 async function toggleMic() {
-  STATE.micOn = !STATE.micOn;
-  if (STATE.localAudioTrack) await STATE.localAudioTrack.setEnabled(STATE.micOn);
-  const icon = document.getElementById('mic-icon');
-  const btn = document.getElementById('btn-mic');
-  if (icon) icon.textContent = STATE.micOn ? 'mic' : 'mic_off';
-  if (btn) btn.className = STATE.micOn
-    ? 'flex flex-col items-center p-3 rounded-xl hover:bg-surface-container-high transition-all group text-on-surface'
-    : 'flex flex-col items-center p-3 rounded-xl bg-error/10 border border-error/30 transition-all group text-error';
-  showToast(STATE.micOn ? 'Microphone on' : 'Microphone off');
+  S.micOn=!S.micOn;
+  if(S.localAudioTrack) await S.localAudioTrack.setEnabled(S.micOn);
+  g('mic-icon').textContent=S.micOn?'mic':'mic_off';
+  g('btn-mic').className=S.micOn?'flex flex-col items-center p-3 rounded-xl hover:bg-surface-container-high transition-all text-on-surface':'flex flex-col items-center p-3 rounded-xl bg-error/10 border border-error/30 transition-all text-error';
+  toast(S.micOn?'Microphone on':'Microphone off');
 }
-
 async function toggleCamera() {
-  STATE.camOn = !STATE.camOn;
-  if (STATE.localVideoTrack) await STATE.localVideoTrack.setEnabled(STATE.camOn);
-  const icon = document.getElementById('cam-icon');
-  const btn = document.getElementById('btn-cam');
-  if (icon) icon.textContent = STATE.camOn ? 'videocam' : 'videocam_off';
-  if (btn) btn.className = STATE.camOn
-    ? 'flex flex-col items-center p-3 rounded-xl hover:bg-surface-container-high transition-all group text-on-surface'
-    : 'flex flex-col items-center p-3 rounded-xl bg-error/10 border border-error/30 transition-all group text-error';
-  showToast(STATE.camOn ? 'Camera on' : 'Camera off');
+  S.camOn=!S.camOn;
+  if(S.localVideoTrack) await S.localVideoTrack.setEnabled(S.camOn);
+  g('cam-icon').textContent=S.camOn?'videocam':'videocam_off';
+  g('btn-cam').className=S.camOn?'flex flex-col items-center p-3 rounded-xl hover:bg-surface-container-high transition-all text-on-surface':'flex flex-col items-center p-3 rounded-xl bg-error/10 border border-error/30 transition-all text-error';
+  toast(S.camOn?'Camera on':'Camera off');
 }
-
 async function leaveRoom() {
-  clearInterval(STATE.timerInterval);
-  if (STATE.localAudioTrack) { STATE.localAudioTrack.close(); STATE.localAudioTrack = null; }
-  if (STATE.localVideoTrack) { STATE.localVideoTrack.close(); STATE.localVideoTrack = null; }
-  if (STATE.client) { await STATE.client.leave(); STATE.client = null; }
-  STATE.participants = [];
-  STATE.remoteUsers = {};
-  STATE.cards = [];
-  STATE.scores = {};
-  document.getElementById('game-screen').classList.add('hidden');
-  document.getElementById('lobby-screen').classList.remove('hidden');
-  showToast('Left the room');
+  clearInterval(S.timerInterval);
+  if(S.localAudioTrack){S.localAudioTrack.close();S.localAudioTrack=null;}
+  if(S.localVideoTrack){S.localVideoTrack.close();S.localVideoTrack=null;}
+  if(S.rtmChannel){await S.rtmChannel.leave().catch(()=>{});S.rtmChannel=null;}
+  if(S.rtmClient){await S.rtmClient.logout().catch(()=>{});S.rtmClient=null;}
+  if(S.client){await S.client.leave().catch(()=>{});S.client=null;}
+  S.participants=[];S.remoteUsers={};S.cards=[];S.scores={};S.cardPositions=[];
+  g('game-screen').classList.add('hidden');
+  g('lobby-screen').classList.remove('hidden');
+  rtmDot('');toast('Left the room');
 }
 
-// ═══════════════════════════════════════════════════════════
-//  CHAT
-// ═══════════════════════════════════════════════════════════
-let chatOpen = false;
-function toggleChat() {
-  chatOpen = !chatOpen;
-  document.getElementById('chat-panel').classList.toggle('open', chatOpen);
+// ══════════════════════════════════════════════════════
+//  CHAT (broadcast via RTM)
+// ══════════════════════════════════════════════════════
+let chatOpen=false;
+function toggleChat(){chatOpen=!chatOpen;g('chat-panel').classList.toggle('open',chatOpen);}
+function sendChat(){
+  const input=g('chat-input'),msg=input.value.trim(); if(!msg) return;
+  input.value=''; appendChat(S.userName,msg,true);
+  broadcast({type:'CHAT',uid:S.myUid,name:S.userName,text:msg});
 }
-
-function sendChat() {
-  const input = document.getElementById('chat-input');
-  const msg = input.value.trim();
-  if (!msg) return;
-  appendChat(STATE.userName, msg, true);
-  input.value = '';
-  // Broadcast via Agora RTM would go here; for now local only
+function appendChat(sender,text,isMe){
+  const c=g('chat-messages'),d=document.createElement('div');
+  d.className='flex flex-col '+(isMe?'items-end':'items-start');
+  d.innerHTML=`<span class="text-[9px] text-on-surface-variant mb-0.5 font-bold uppercase tracking-wider">${sender}</span><div class="px-3 py-1.5 rounded-xl text-xs max-w-[80%] ${isMe?'bg-primary text-on-primary':'bg-surface-container-high text-on-surface'}">${esc(text)}</div>`;
+  c.appendChild(d); c.scrollTop=c.scrollHeight;
 }
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
-function appendChat(sender, text, isMe) {
-  const container = document.getElementById('chat-messages');
-  const div = document.createElement('div');
-  div.className = 'flex flex-col ' + (isMe ? 'items-end' : 'items-start');
-  div.innerHTML = `
-    <span class="text-[9px] text-on-surface-variant mb-0.5 font-bold uppercase tracking-wider">${sender}</span>
-    <div class="px-3 py-1.5 rounded-xl text-xs max-w-[80%] ${isMe ? 'bg-primary text-on-primary' : 'bg-surface-container-high text-on-surface'}">${escapeHtml(text)}</div>`;
-  container.appendChild(div);
-  container.scrollTop = container.scrollHeight;
-}
+// ══════════════════════════════════════════════════════
+//  RESIZE
+// ══════════════════════════════════════════════════════
+let rsz;
+window.addEventListener('resize',()=>{ clearTimeout(rsz); rsz=setTimeout(()=>{ if(S.cards.length){computeHive();renderBoard();} },220); });
+window.onbeforeunload=()=>{ if(S.client) return 'Leave the game?'; };
 
-function escapeHtml(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
-
-// ═══════════════════════════════════════════════════════════
-//  UTILS
-// ═══════════════════════════════════════════════════════════
-function shuffleArray(arr) {
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-}
-
-// Resize board on window resize
-window.addEventListener('resize', () => {
-  if (STATE.cards.length) renderBoard();
-});
-
-// Prevent accidental navigation
-window.onbeforeunload = () => {
-  if (STATE.client) return 'Leave the game?';
-};
-
-// ═══════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
 //  URL PARAM PREFILL
-// ═══════════════════════════════════════════════════════════
-(function readInviteParams() {
-  const p = new URLSearchParams(window.location.search);
-  const room  = p.get('room');
-  const appId = p.get('id');
-  const token = p.get('t');
-
-  if (!room && !appId) return; // nothing to prefill
-
-  // Switch to join tab and prefill fields
+// ══════════════════════════════════════════════════════
+(function(){
+  const p=new URLSearchParams(window.location.search);
+  const room=p.get('room'),appId=p.get('id'),token=p.get('t');
+  if(!room&&!appId) return;
   setTab('join');
-  if (room)  { const el = document.getElementById('join-room');  if (el) el.value = room.toUpperCase(); }
-  if (appId) { const el = document.getElementById('join-appid'); if (el) el.value = appId; }
-  if (token) { const el = document.getElementById('join-token'); if (el) el.value = token; }
-
-  // Highlight the name field so the user knows what's left to fill
-  const nameEl = document.getElementById('join-name');
-  if (nameEl) {
-    nameEl.focus();
-    nameEl.placeholder = 'Enter your display name to join';
-    nameEl.classList.add('border-tertiary');
-  }
-
-  // Show a banner explaining the prefill
-  const banner = document.createElement('div');
-  banner.className = 'mb-4 px-4 py-3 rounded-xl bg-tertiary-container/30 border border-tertiary/40 text-on-tertiary text-xs font-bold text-center fade-in';
-  banner.textContent = '⚡ You were invited to ' + (room || 'a room') + ' — just enter your name and join!';
-  const formJoin = document.getElementById('form-join');
-  if (formJoin) formJoin.insertBefore(banner, formJoin.firstChild);
+  if(room){const e=g('join-room');if(e)e.value=room.toUpperCase();}
+  if(appId){const e=g('join-appid');if(e)e.value=appId;}
+  if(token){const e=g('join-token');if(e)e.value=token;}
+  const ne=g('join-name');
+  if(ne){ne.focus();ne.placeholder='Enter your display name to join';ne.classList.add('border-tertiary');}
+  const ban=document.createElement('div');
+  ban.className='mb-4 px-4 py-3 rounded-xl bg-tertiary-container/30 border border-tertiary/40 text-on-tertiary text-xs font-bold text-center fade-in';
+  ban.textContent='⚡ You were invited to '+(room||'a room')+' — just enter your name and join!';
+  const fj=g('form-join'); if(fj) fj.insertBefore(ban,fj.firstChild);
 })();
 </script>
 </body>
