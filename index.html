@@ -3,26 +3,26 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Electric Sandbox — Memory Game</title>
+<title>Memory Hive</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <script src="https://download.agora.io/sdk/release/AgoraRTC_N-4.21.0.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/agora-rtm-sdk@2.2.2/agora-rtm.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-<script id="tailwind-config">
+<script>
 tailwind.config = {
   darkMode:"class",
   theme:{ extend:{
     colors:{
-      "primary":"#97a9ff","primary-dim":"#3e65ff","primary-container":"#859aff","on-primary":"#002283",
+      "primary":"#97a9ff","primary-container":"#859aff","on-primary":"#002283",
       "secondary":"#c57eff","secondary-container":"#6a0baa","on-secondary":"#340058",
       "tertiary":"#ffe484","tertiary-container":"#fdd404","on-tertiary":"#635200",
       "error":"#ff6e84","error-container":"#a70138",
-      "surface":"#0e0e10","surface-dim":"#0e0e10","surface-bright":"#2c2c2f",
+      "surface":"#0e0e10","surface-bright":"#2c2c2f",
       "surface-container":"#19191c","surface-container-low":"#131315",
       "surface-container-high":"#1f1f22","surface-container-highest":"#262528",
-      "surface-variant":"#262528","on-surface":"#f6f3f5","on-surface-variant":"#acaaad",
-      "background":"#0e0e10","on-background":"#f6f3f5","outline":"#767577","outline-variant":"#48474a",
+      "on-surface":"#f6f3f5","on-surface-variant":"#acaaad",
+      "background":"#0e0e10","outline":"#767577","outline-variant":"#48474a",
     },
     fontFamily:{"headline":["Plus Jakarta Sans","sans-serif"],"body":["Space Grotesk","sans-serif"]},
     borderRadius:{DEFAULT:"0.75rem",lg:"1.25rem",xl:"2rem",full:"9999px"},
@@ -31,302 +31,458 @@ tailwind.config = {
 </script>
 <style>
 *{box-sizing:border-box}
-.material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24}
-.fill-icon{font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24}
+body{font-family:'Space Grotesk',sans-serif}
+.ms{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24}
+.ms-fill{font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24}
 
-/* Card flip */
-.card-scene{perspective:700px;position:absolute}
-.card-inner{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform 0.55s cubic-bezier(0.4,0,0.2,1)}
+/* ── Card flip ── */
+.card-scene{perspective:700px;position:absolute;cursor:pointer}
+.card-inner{
+  position:relative;width:100%;height:100%;
+  transform-style:preserve-3d;
+  transition:transform 0.5s cubic-bezier(0.4,0,0.2,1);
+}
 .card-inner.flipped{transform:rotateY(180deg)}
-.card-front,.card-back{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:0.6rem;overflow:hidden}
-.card-front{background:#1f1f22}
+.card-front,.card-back{
+  position:absolute;inset:0;
+  backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  border-radius:0.6rem;overflow:hidden;
+}
+.card-front{background:#1f1f22;border:1px solid rgba(151,169,255,0.12);transition:border-color 0.2s}
+.card-scene:hover .card-front{border-color:rgba(151,169,255,0.45)}
 .card-back{transform:rotateY(180deg);background:#000}
-.card-matched .card-back{box-shadow:0 0 18px rgba(151,169,255,0.55),inset 0 0 14px rgba(151,169,255,0.1)}
+.card-matched .card-back{box-shadow:0 0 16px rgba(151,169,255,0.5),inset 0 0 12px rgba(151,169,255,0.08)}
 .card-matched .card-inner{animation:matchBurst 0.4s ease}
-@keyframes matchBurst{0%{transform:rotateY(180deg) scale(1)}50%{transform:rotateY(180deg) scale(1.1)}100%{transform:rotateY(180deg) scale(1)}}
+@keyframes matchBurst{0%{transform:rotateY(180deg) scale(1)}50%{transform:rotateY(180deg) scale(1.08)}100%{transform:rotateY(180deg) scale(1)}}
 
-/* Turn pulse */
+/* Card pending (guest waiting for host confirm) */
+.card-pending .card-front{border-color:rgba(255,228,132,0.6);animation:pendingPulse 0.6s ease infinite alternate}
+@keyframes pendingPulse{from{box-shadow:none}to{box-shadow:0 0 10px rgba(255,228,132,0.35)}}
+
+/* ── Turn banner ── */
 .turn-pulse{animation:pulseGlow 2s ease-in-out infinite}
-@keyframes pulseGlow{0%,100%{box-shadow:0 0 8px rgba(253,212,4,0.25)}50%{box-shadow:0 0 26px rgba(253,212,4,0.65),0 0 52px rgba(253,212,4,0.18)}}
+@keyframes pulseGlow{0%,100%{box-shadow:0 0 6px rgba(253,212,4,0.2)}50%{box-shadow:0 0 22px rgba(253,212,4,0.55),0 0 44px rgba(253,212,4,0.15)}}
 
-/* Animations */
-.slide-up{animation:slideUp 0.5s ease forwards}
-.fade-in{animation:fadeIn 0.4s ease forwards}
-@keyframes slideUp{0%{transform:translateY(28px);opacity:0}100%{transform:translateY(0);opacity:1}}
+/* ── Animations ── */
+.slide-up{animation:slideUp 0.45s ease forwards}
+.fade-in{animation:fadeIn 0.35s ease forwards}
+@keyframes slideUp{0%{transform:translateY(24px);opacity:0}100%{transform:translateY(0);opacity:1}}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-.score-badge.bump{animation:scoreBump 0.3s ease}
-@keyframes scoreBump{0%{transform:scale(1)}50%{transform:scale(1.3)}100%{transform:scale(1)}}
+.score-bump{animation:scoreBump 0.3s ease}
+@keyframes scoreBump{0%{transform:scale(1)}50%{transform:scale(1.28)}100%{transform:scale(1)}}
 
-/* Scrollbar */
+/* ── Scrollbar ── */
 ::-webkit-scrollbar{width:4px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:#48474a;border-radius:9999px}
 
-/* Spectator badge */
-.spectator-badge{position:absolute;top:2px;right:2px;background:rgba(197,126,255,0.9);border-radius:4px;font-size:9px;font-weight:700;color:#340058;padding:1px 4px;text-transform:uppercase}
-
-/* Toast */
-#toast{position:fixed;bottom:110px;left:50%;transform:translateX(-50%) translateY(16px);background:#262528;border:1px solid #48474a;color:#f6f3f5;padding:0.6rem 1.4rem;border-radius:9999px;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:0.85rem;opacity:0;transition:all 0.3s ease;pointer-events:none;z-index:1000;white-space:nowrap}
+/* ── Toast ── */
+#toast{
+  position:fixed;bottom:110px;left:50%;transform:translateX(-50%) translateY(14px);
+  background:#262528;border:1px solid #48474a;color:#f6f3f5;
+  padding:0.55rem 1.3rem;border-radius:9999px;
+  font-weight:600;font-size:0.82rem;opacity:0;
+  transition:opacity 0.25s,transform 0.25s;pointer-events:none;z-index:1000;white-space:nowrap;
+}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
-/* Chat */
-#chat-panel{position:fixed;right:0;bottom:82px;width:288px;background:#131315;border:1px solid #262528;border-radius:1rem 1rem 0 0;z-index:60;transform:translateY(100%);transition:transform 0.3s ease;max-height:400px;display:flex;flex-direction:column}
+/* ── Chat ── */
+#chat-panel{
+  position:fixed;right:0;bottom:80px;width:288px;
+  background:#131315;border:1px solid #262528;border-radius:1rem 1rem 0 0;
+  z-index:60;transform:translateY(100%);transition:transform 0.28s ease;
+  max-height:400px;display:flex;flex-direction:column;
+}
 #chat-panel.open{transform:translateY(0)}
 
-/* Lobby */
-#lobby-screen{position:fixed;inset:0;z-index:200;background:#0e0e10}
-.lobby-bg{background:radial-gradient(ellipse at 30% 20%,rgba(151,169,255,0.12) 0%,transparent 60%),radial-gradient(ellipse at 70% 80%,rgba(197,126,255,0.10) 0%,transparent 60%),#0e0e10}
+/* ── Screens ── */
+#lobby-screen{position:fixed;inset:0;z-index:200;
+  background:radial-gradient(ellipse at 28% 18%,rgba(151,169,255,0.11) 0%,transparent 58%),
+             radial-gradient(ellipse at 72% 82%,rgba(197,126,255,0.09) 0%,transparent 58%),#0e0e10;
+}
 
-/* Hive board */
-#board{position:relative}
+/* ── Board ── */
+#board{position:relative;will-change:transform}
 
-/* RTM dot */
-#rtm-dot{width:7px;height:7px;border-radius:50%;background:#48474a;display:inline-block;margin-right:5px;vertical-align:middle;transition:background 0.4s}
-#rtm-dot.connected{background:#4ade80;box-shadow:0 0 6px rgba(74,222,128,0.6)}
+/* ── Spectator badge ── */
+.spec-badge{
+  position:absolute;top:2px;right:2px;
+  background:rgba(197,126,255,0.88);border-radius:4px;
+  font-size:8px;font-weight:700;color:#340058;padding:1px 4px;text-transform:uppercase;
+}
+
+/* ── RTM dot ── */
+#rtm-dot{width:7px;height:7px;border-radius:50%;background:#48474a;
+  display:inline-block;margin-right:4px;vertical-align:middle;transition:background 0.4s}
+#rtm-dot.connected{background:#4ade80;box-shadow:0 0 5px rgba(74,222,128,0.55)}
 #rtm-dot.connecting{background:#fbbf24;animation:dotPulse 1s infinite}
 #rtm-dot.error{background:#f87171}
-@keyframes dotPulse{0%,100%{opacity:1}50%{opacity:0.35}}
+@keyframes dotPulse{0%,100%{opacity:1}50%{opacity:0.3}}
+
+/* ── Lobby waiting state ── */
+#waiting-room{display:none}
+#waiting-room.active{display:block}
 </style>
 </head>
-<body class="bg-background text-on-surface font-body overflow-hidden h-screen">
+<body class="bg-background text-on-surface overflow-hidden h-screen">
 
-<!-- LOBBY -->
-<div id="lobby-screen" class="lobby-bg flex items-center justify-center">
+<!-- ════════════════════ LOBBY ════════════════════ -->
+<div id="lobby-screen" class="flex items-center justify-center">
   <div class="w-full max-w-md px-6 slide-up">
-    <div class="text-center mb-10">
-      <div class="text-4xl font-black text-primary italic uppercase tracking-wider font-headline mb-2">⚡ Electric Sandbox</div>
+
+    <!-- Logo -->
+    <div class="text-center mb-8">
+      <div class="text-4xl font-black text-primary italic uppercase tracking-wider font-headline mb-1">🐝 Memory Hive</div>
       <p class="text-on-surface-variant text-sm">Video Memory Game · Meet &amp; Match</p>
     </div>
-    <div class="flex bg-surface-container rounded-xl p-1 mb-6">
-      <button id="tab-join" onclick="setTab('join')" class="flex-1 py-2.5 text-sm font-bold rounded-lg transition-all duration-200 bg-surface-bright text-on-surface">Join Room</button>
-      <button id="tab-create" onclick="setTab('create')" class="flex-1 py-2.5 text-sm font-bold rounded-lg transition-all duration-200 text-on-surface-variant">Create Room</button>
+
+    <!-- Tabs -->
+    <div class="flex bg-surface-container rounded-xl p-1 mb-5">
+      <button id="tab-join" onclick="setTab('join')"
+        class="flex-1 py-2.5 text-sm font-bold rounded-lg transition-all bg-surface-bright text-on-surface">Join Room</button>
+      <button id="tab-create" onclick="setTab('create')"
+        class="flex-1 py-2.5 text-sm font-bold rounded-lg transition-all text-on-surface-variant">Create Room</button>
     </div>
 
     <!-- JOIN -->
-    <div id="form-join" class="space-y-4">
+    <div id="form-join" class="space-y-3">
       <div>
-        <label class="text-xs uppercase tracking-widest text-on-surface-variant font-bold block mb-1.5">Your Name</label>
-        <input id="join-name" type="text" placeholder="e.g. Alex M." class="w-full bg-surface-container border border-outline-variant rounded-xl px-4 py-3 text-on-surface placeholder-on-surface-variant/50 focus:outline-none focus:border-primary transition-colors"/>
+        <label class="text-xs uppercase tracking-widest text-on-surface-variant font-bold block mb-1">Your Name</label>
+        <input id="join-name" type="text" placeholder="e.g. Alex M."
+          class="w-full bg-surface-container border border-outline-variant rounded-xl px-4 py-3 text-on-surface focus:outline-none focus:border-primary transition-colors"/>
       </div>
       <div>
-        <label class="text-xs uppercase tracking-widest text-on-surface-variant font-bold block mb-1.5">Room Code</label>
-        <input id="join-room" type="text" placeholder="e.g. ALPHA-ONE" class="w-full bg-surface-container border border-outline-variant rounded-xl px-4 py-3 text-on-surface placeholder-on-surface-variant/50 focus:outline-none focus:border-primary transition-colors uppercase"/>
+        <label class="text-xs uppercase tracking-widest text-on-surface-variant font-bold block mb-1">Room Code</label>
+        <input id="join-room" type="text" placeholder="e.g. HIVE-ONE"
+          class="w-full bg-surface-container border border-outline-variant rounded-xl px-4 py-3 text-on-surface focus:outline-none focus:border-primary transition-colors uppercase"/>
       </div>
       <div>
-        <label class="text-xs uppercase tracking-widest text-on-surface-variant font-bold block mb-1.5">Agora App ID</label>
-        <input id="join-appid" type="text" placeholder="Your Agora App ID" class="w-full bg-surface-container border border-outline-variant rounded-xl px-4 py-3 text-on-surface placeholder-on-surface-variant/50 focus:outline-none focus:border-primary transition-colors font-mono text-sm"/>
+        <label class="text-xs uppercase tracking-widest text-on-surface-variant font-bold block mb-1">Agora App ID</label>
+        <input id="join-appid" type="text" placeholder="Your Agora App ID"
+          class="w-full bg-surface-container border border-outline-variant rounded-xl px-4 py-3 text-on-surface focus:outline-none focus:border-primary transition-colors font-mono text-sm"/>
       </div>
       <div>
-        <label class="text-xs uppercase tracking-widest text-on-surface-variant font-bold block mb-1.5">Token (optional)</label>
-        <input id="join-token" type="text" placeholder="Leave blank if not using token auth" class="w-full bg-surface-container border border-outline-variant rounded-xl px-4 py-3 text-on-surface placeholder-on-surface-variant/50 focus:outline-none focus:border-primary transition-colors font-mono text-sm"/>
+        <label class="text-xs uppercase tracking-widest text-on-surface-variant font-bold block mb-1">Token <span class="normal-case opacity-60">(optional)</span></label>
+        <input id="join-token" type="text" placeholder="Leave blank if not using token auth"
+          class="w-full bg-surface-container border border-outline-variant rounded-xl px-4 py-3 text-on-surface focus:outline-none focus:border-primary transition-colors font-mono text-sm"/>
       </div>
-      <button onclick="joinRoom()" class="w-full py-3.5 bg-gradient-to-r from-primary to-primary-container text-on-primary font-black rounded-xl uppercase tracking-wider text-sm hover:scale-[1.02] active:scale-[0.98] transition-transform shadow-lg shadow-primary/20 mt-2">⚡ Join Game</button>
+      <button onclick="doJoin()"
+        class="w-full py-3.5 bg-gradient-to-r from-primary to-primary-container text-on-primary font-black rounded-xl uppercase tracking-wider text-sm hover:scale-[1.02] active:scale-[0.98] transition-transform mt-1">
+        🐝 Join Game
+      </button>
     </div>
 
     <!-- CREATE -->
-    <div id="form-create" class="space-y-4 hidden">
+    <div id="form-create" class="space-y-3 hidden">
       <div>
-        <label class="text-xs uppercase tracking-widest text-on-surface-variant font-bold block mb-1.5">Your Name</label>
-        <input id="create-name" type="text" placeholder="e.g. Host Alex" class="w-full bg-surface-container border border-outline-variant rounded-xl px-4 py-3 text-on-surface placeholder-on-surface-variant/50 focus:outline-none focus:border-primary transition-colors"/>
+        <label class="text-xs uppercase tracking-widest text-on-surface-variant font-bold block mb-1">Your Name</label>
+        <input id="create-name" type="text" placeholder="e.g. Host Alex"
+          class="w-full bg-surface-container border border-outline-variant rounded-xl px-4 py-3 text-on-surface focus:outline-none focus:border-primary transition-colors"/>
       </div>
       <div>
-        <label class="text-xs uppercase tracking-widest text-on-surface-variant font-bold block mb-1.5">Room Name</label>
-        <input id="create-room" type="text" placeholder="e.g. ALPHA-ONE" class="w-full bg-surface-container border border-outline-variant rounded-xl px-4 py-3 text-on-surface placeholder-on-surface-variant/50 focus:outline-none focus:border-primary transition-colors uppercase"/>
+        <label class="text-xs uppercase tracking-widest text-on-surface-variant font-bold block mb-1">Room Name</label>
+        <input id="create-room" type="text" placeholder="e.g. HIVE-ONE"
+          class="w-full bg-surface-container border border-outline-variant rounded-xl px-4 py-3 text-on-surface focus:outline-none focus:border-primary transition-colors uppercase"/>
       </div>
       <div>
-        <label class="text-xs uppercase tracking-widest text-on-surface-variant font-bold block mb-1.5">Agora App ID</label>
-        <input id="create-appid" type="text" placeholder="Your Agora App ID" class="w-full bg-surface-container border border-outline-variant rounded-xl px-4 py-3 text-on-surface placeholder-on-surface-variant/50 focus:outline-none focus:border-primary transition-colors font-mono text-sm"/>
+        <label class="text-xs uppercase tracking-widest text-on-surface-variant font-bold block mb-1">Agora App ID</label>
+        <input id="create-appid" type="text" placeholder="Your Agora App ID"
+          class="w-full bg-surface-container border border-outline-variant rounded-xl px-4 py-3 text-on-surface focus:outline-none focus:border-primary transition-colors font-mono text-sm"/>
       </div>
       <div>
-        <label class="text-xs uppercase tracking-widest text-on-surface-variant font-bold block mb-1.5">Token (optional)</label>
-        <input id="create-token" type="text" placeholder="Leave blank if not using token auth" class="w-full bg-surface-container border border-outline-variant rounded-xl px-4 py-3 text-on-surface placeholder-on-surface-variant/50 focus:outline-none focus:border-primary transition-colors font-mono text-sm"/>
+        <label class="text-xs uppercase tracking-widest text-on-surface-variant font-bold block mb-1">Token <span class="normal-case opacity-60">(optional)</span></label>
+        <input id="create-token" type="text" placeholder="Leave blank if not using token auth"
+          class="w-full bg-surface-container border border-outline-variant rounded-xl px-4 py-3 text-on-surface focus:outline-none focus:border-primary transition-colors font-mono text-sm"/>
       </div>
       <div>
-        <label class="text-xs uppercase tracking-widest text-on-surface-variant font-bold block mb-1.5">Max Video Players</label>
+        <label class="text-xs uppercase tracking-widest text-on-surface-variant font-bold block mb-1">Max Video Players</label>
         <div class="flex gap-3">
-          <button id="btn-max10" onclick="setMaxPlayers(10)" class="flex-1 py-2.5 rounded-xl text-sm font-bold border-2 border-primary bg-primary/10 text-primary transition-all">10 Players</button>
-          <button id="btn-max20" onclick="setMaxPlayers(20)" class="flex-1 py-2.5 rounded-xl text-sm font-bold border-2 border-outline-variant text-on-surface-variant hover:border-primary hover:text-primary transition-all">20 Players</button>
+          <button id="btn-max10" onclick="setMax(10)"
+            class="flex-1 py-2.5 rounded-xl text-sm font-bold border-2 border-primary bg-primary/10 text-primary transition-all">10 Players</button>
+          <button id="btn-max20" onclick="setMax(20)"
+            class="flex-1 py-2.5 rounded-xl text-sm font-bold border-2 border-outline-variant text-on-surface-variant hover:border-primary hover:text-primary transition-all">20 Players</button>
         </div>
       </div>
-      <button onclick="createRoom()" class="w-full py-3.5 bg-gradient-to-r from-secondary to-secondary-container text-white font-black rounded-xl uppercase tracking-wider text-sm hover:scale-[1.02] active:scale-[0.98] transition-transform shadow-lg shadow-secondary/20 mt-2">⚡ Create Room</button>
+      <button onclick="doCreate()"
+        class="w-full py-3.5 bg-gradient-to-r from-secondary to-secondary-container text-white font-black rounded-xl uppercase tracking-wider text-sm hover:scale-[1.02] active:scale-[0.98] transition-transform mt-1">
+        🐝 Create Room
+      </button>
     </div>
-    <p class="text-center text-xs text-on-surface-variant mt-6 opacity-60">Requires Agora App ID · Real-time sync via Agora RTM</p>
+
+    <p class="text-center text-xs text-on-surface-variant mt-5 opacity-50">Requires Agora App ID · Synced via Agora RTM</p>
   </div>
 </div>
 
-<!-- GAME SCREEN -->
+<!-- ════════════════════ WAITING ROOM (host pre-game lobby) ════════════════════ -->
+<div id="waiting-screen" class="hidden fixed inset-0 z-150 bg-background flex items-center justify-center">
+  <div class="w-full max-w-sm px-6 text-center slide-up">
+    <div class="text-4xl mb-4">🐝</div>
+    <h2 class="font-headline font-black text-2xl text-primary uppercase mb-2">Room Ready</h2>
+    <div class="bg-surface-container rounded-xl px-5 py-3 mb-4 font-mono text-primary font-bold text-lg" id="waiting-room-code"></div>
+    <p class="text-on-surface-variant text-sm mb-6">Share the invite link, then start when everyone's in.</p>
+    <div id="waiting-players" class="space-y-2 mb-6 text-left max-h-48 overflow-y-auto"></div>
+    <div class="flex gap-3">
+      <button onclick="copyInvite()" class="flex-1 py-2.5 bg-primary/10 border border-primary/30 rounded-xl text-primary text-sm font-bold hover:bg-primary/20 transition-colors">🔗 Copy Invite</button>
+      <button id="start-btn" onclick="hostStartGame()"
+        class="flex-1 py-2.5 bg-gradient-to-r from-primary to-primary-container text-on-primary font-black rounded-xl text-sm uppercase tracking-wide hover:scale-[1.02] active:scale-[0.98] transition-transform">
+        Start Game
+      </button>
+    </div>
+    <button onclick="cancelWaiting()" class="mt-3 text-xs text-on-surface-variant hover:text-error transition-colors">Cancel &amp; leave</button>
+  </div>
+</div>
+
+<!-- ════════════════════ GAME SCREEN ════════════════════ -->
 <div id="game-screen" class="hidden h-screen flex flex-col">
+
+  <!-- Top bar -->
   <header class="flex justify-between items-center px-5 py-3 bg-surface/80 backdrop-blur-xl border-b border-outline-variant/30 z-50 flex-shrink-0">
     <div class="flex items-center gap-2">
-      <div class="text-xl font-black text-primary italic uppercase tracking-wider font-headline">⚡ ES</div>
+      <span class="text-lg font-black text-primary italic font-headline">🐝 MH</span>
       <span id="rtm-dot" title="RTM"></span>
     </div>
-    <nav class="flex items-center gap-5">
-      <div class="text-xs font-bold uppercase tracking-widest text-primary border-b border-primary pb-0.5 font-headline" id="header-room">Room: —</div>
-      <div class="text-xs text-on-surface-variant font-bold font-headline" id="header-timer">00:00</div>
-      <div class="text-xs text-tertiary font-black font-headline score-badge" id="header-score">Score: 0</div>
+    <nav class="flex items-center gap-4">
+      <div class="text-xs font-bold uppercase tracking-widest text-primary border-b border-primary pb-0.5 font-headline" id="header-room">—</div>
+      <div class="text-xs text-on-surface-variant font-bold" id="header-timer">00:00</div>
+      <div class="text-xs text-tertiary font-black" id="header-score">0 pairs</div>
     </nav>
-    <div class="flex items-center gap-2">
-      <button onclick="toggleSidebar()" class="text-primary hover:text-white hover:bg-surface-container-high rounded-full p-1.5 transition-all"><span class="material-symbols-outlined text-xl">leaderboard</span></button>
-      <button onclick="leaveRoom()" class="text-error hover:text-white hover:bg-error-container/30 rounded-full p-1.5 transition-all"><span class="material-symbols-outlined text-xl fill-icon">call_end</span></button>
+    <div class="flex items-center gap-1">
+      <button onclick="toggleSidebar()" class="text-primary hover:bg-surface-container-high rounded-full p-1.5 transition-all"><span class="material-symbols-outlined ms text-xl">leaderboard</span></button>
+      <button onclick="leaveRoom()" class="text-error hover:bg-error-container/20 rounded-full p-1.5 transition-all"><span class="material-symbols-outlined ms-fill text-xl">call_end</span></button>
     </div>
   </header>
 
   <main class="flex flex-1 overflow-hidden">
+
+    <!-- Board area -->
     <section class="flex-1 flex flex-col overflow-hidden px-4 py-3">
-      <!-- Turn Banner -->
-      <div id="turn-banner" class="mb-3 rounded-xl px-5 py-3 turn-pulse flex items-center justify-between bg-tertiary-container text-on-tertiary flex-shrink-0">
-        <div class="flex items-center gap-3">
-          <span class="material-symbols-outlined text-2xl fill-icon">stars</span>
+
+      <!-- Turn banner -->
+      <div id="turn-banner" class="mb-3 rounded-xl px-4 py-2.5 flex items-center justify-between bg-tertiary-container text-on-tertiary flex-shrink-0 turn-pulse">
+        <div class="flex items-center gap-2.5">
+          <span class="material-symbols-outlined ms-fill text-xl">stars</span>
           <div>
-            <div id="turn-text" class="font-headline font-black text-base uppercase tracking-tight">Waiting…</div>
-            <div id="turn-sub" class="text-xs font-semibold opacity-70">Loading…</div>
+            <div id="turn-text" class="font-headline font-black text-sm uppercase tracking-tight">Waiting…</div>
+            <div id="turn-sub" class="text-xs font-semibold opacity-70">—</div>
           </div>
         </div>
-        <div id="cards-left" class="text-xs font-bold text-right opacity-70"></div>
+        <div id="cards-left" class="text-xs font-bold opacity-70"></div>
       </div>
-      <!-- Hive Board -->
+
+      <!-- Hive board -->
       <div class="flex-1 overflow-auto relative" id="board-wrapper">
         <div id="board"></div>
       </div>
     </section>
 
     <!-- Sidebar -->
-    <aside id="sidebar" class="w-64 flex-shrink-0 bg-surface-container-low border-l border-outline-variant/30 flex flex-col overflow-hidden transition-all duration-300">
+    <aside id="sidebar" class="w-60 flex-shrink-0 bg-surface-container-low border-l border-outline-variant/30 flex flex-col overflow-hidden transition-all duration-300">
       <div class="flex border-b border-outline-variant/30">
-        <button onclick="showSidePanel('scores')" id="sp-scores-btn" class="flex-1 py-2.5 text-xs font-bold uppercase tracking-widest text-primary border-b-2 border-primary">Scores</button>
-        <button onclick="showSidePanel('players')" id="sp-players-btn" class="flex-1 py-2.5 text-xs font-bold uppercase tracking-widest text-on-surface-variant">Players</button>
+        <button onclick="showPanel('scores')" id="sp-s-btn"
+          class="flex-1 py-2.5 text-xs font-bold uppercase tracking-widest text-primary border-b-2 border-primary">Scores</button>
+        <button onclick="showPanel('players')" id="sp-p-btn"
+          class="flex-1 py-2.5 text-xs font-bold uppercase tracking-widest text-on-surface-variant">Players</button>
       </div>
       <div id="sp-scores" class="flex-1 overflow-y-auto p-3 space-y-1"></div>
       <div id="sp-players" class="flex-1 overflow-y-auto p-3 space-y-2 hidden"></div>
       <div class="p-3 border-t border-outline-variant/30">
-        <button onclick="copyRoomCode()" class="w-full py-2 bg-primary/10 border border-primary/30 rounded-xl text-primary text-xs font-bold uppercase tracking-wider hover:bg-primary/20 transition-colors">🔗 Copy Invite Link</button>
+        <button onclick="copyInvite()" class="w-full py-2 bg-primary/10 border border-primary/30 rounded-xl text-primary text-xs font-bold uppercase tracking-wider hover:bg-primary/20 transition-colors">
+          🔗 Copy Invite
+        </button>
       </div>
     </aside>
   </main>
 
+  <!-- Bottom controls -->
   <nav class="flex-shrink-0 flex justify-center items-center py-3 bg-surface/80 backdrop-blur-xl border-t border-outline-variant/30">
-    <div class="flex items-center gap-3">
-      <button id="btn-mic" onclick="toggleMic()" class="flex flex-col items-center p-3 rounded-xl hover:bg-surface-container-high transition-all text-on-surface"><span id="mic-icon" class="material-symbols-outlined text-xl">mic</span><span class="text-[9px] font-bold uppercase mt-0.5">Mic</span></button>
-      <button id="btn-cam" onclick="toggleCamera()" class="flex flex-col items-center p-3 rounded-xl hover:bg-surface-container-high transition-all text-on-surface"><span id="cam-icon" class="material-symbols-outlined text-xl">videocam</span><span class="text-[9px] font-bold uppercase mt-0.5">Camera</span></button>
-      <button onclick="toggleChat()" class="flex flex-col items-center p-3 rounded-xl bg-primary/10 border border-primary/30 text-primary"><span class="material-symbols-outlined text-xl fill-icon">chat_bubble</span><span class="text-[9px] font-bold uppercase mt-0.5">Chat</span></button>
-      <button onclick="toggleSidebar()" class="flex flex-col items-center p-3 rounded-xl hover:bg-surface-container-high transition-all text-on-surface"><span class="material-symbols-outlined text-xl">groups</span><span class="text-[9px] font-bold uppercase mt-0.5">Players</span></button>
-      <button onclick="leaveRoom()" class="flex flex-col items-center p-3 rounded-xl hover:bg-error-container/20 text-error"><span class="material-symbols-outlined text-xl fill-icon">call_end</span><span class="text-[9px] font-bold uppercase mt-0.5">Leave</span></button>
+    <div class="flex items-center gap-2">
+      <button id="btn-mic" onclick="toggleMic()" class="flex flex-col items-center p-2.5 rounded-xl hover:bg-surface-container-high transition-all text-on-surface">
+        <span id="mic-icon" class="material-symbols-outlined ms text-xl">mic</span>
+        <span class="text-[9px] font-bold uppercase mt-0.5">Mic</span>
+      </button>
+      <button id="btn-cam" onclick="toggleCamera()" class="flex flex-col items-center p-2.5 rounded-xl hover:bg-surface-container-high transition-all text-on-surface">
+        <span id="cam-icon" class="material-symbols-outlined ms text-xl">videocam</span>
+        <span class="text-[9px] font-bold uppercase mt-0.5">Camera</span>
+      </button>
+      <button onclick="toggleChat()" class="flex flex-col items-center p-2.5 rounded-xl bg-primary/10 border border-primary/30 text-primary">
+        <span class="material-symbols-outlined ms-fill text-xl">chat_bubble</span>
+        <span class="text-[9px] font-bold uppercase mt-0.5">Chat</span>
+      </button>
+      <button onclick="toggleSidebar()" class="flex flex-col items-center p-2.5 rounded-xl hover:bg-surface-container-high transition-all text-on-surface">
+        <span class="material-symbols-outlined ms text-xl">groups</span>
+        <span class="text-[9px] font-bold uppercase mt-0.5">Players</span>
+      </button>
+      <button onclick="leaveRoom()" class="flex flex-col items-center p-2.5 rounded-xl hover:bg-error-container/20 text-error">
+        <span class="material-symbols-outlined ms-fill text-xl">call_end</span>
+        <span class="text-[9px] font-bold uppercase mt-0.5">Leave</span>
+      </button>
     </div>
   </nav>
 </div>
 
-<!-- CHAT -->
+<!-- Chat panel -->
 <div id="chat-panel">
   <div class="flex items-center justify-between px-4 py-3 border-b border-outline-variant/30">
     <span class="font-bold text-sm">Chat</span>
-    <button onclick="toggleChat()" class="text-on-surface-variant hover:text-on-surface"><span class="material-symbols-outlined text-lg">close</span></button>
+    <button onclick="toggleChat()" class="text-on-surface-variant hover:text-on-surface"><span class="material-symbols-outlined ms text-lg">close</span></button>
   </div>
-  <div id="chat-messages" class="flex-1 overflow-y-auto p-3 space-y-2 text-sm" style="min-height:200px;max-height:260px;"></div>
+  <div id="chat-messages" class="flex-1 overflow-y-auto p-3 space-y-2 text-sm" style="min-height:180px;max-height:250px;"></div>
   <div class="p-3 border-t border-outline-variant/30 flex gap-2">
-    <input id="chat-input" type="text" placeholder="Say something…" class="flex-1 bg-surface-container border border-outline-variant rounded-xl px-3 py-2 text-sm text-on-surface focus:outline-none focus:border-primary" onkeypress="if(event.key==='Enter')sendChat()"/>
+    <input id="chat-input" type="text" placeholder="Say something…"
+      class="flex-1 bg-surface-container border border-outline-variant rounded-xl px-3 py-2 text-sm text-on-surface focus:outline-none focus:border-primary"
+      onkeypress="if(event.key==='Enter')sendChat()"/>
     <button onclick="sendChat()" class="bg-primary text-on-primary rounded-xl px-3 py-2 text-xs font-bold">Send</button>
   </div>
 </div>
 
 <div id="toast"></div>
-<div class="fixed top-1/2 -left-32 w-64 h-64 bg-primary/8 blur-[120px] rounded-full pointer-events-none z-0"></div>
-<div class="fixed bottom-0 -right-24 w-80 h-80 bg-secondary/8 blur-[130px] rounded-full pointer-events-none z-0"></div>
+<div class="fixed top-1/3 -left-24 w-48 h-48 bg-primary/6 blur-[100px] rounded-full pointer-events-none z-0"></div>
+<div class="fixed bottom-0 -right-16 w-64 h-64 bg-secondary/6 blur-[110px] rounded-full pointer-events-none z-0"></div>
 
 <script>
-// ══════════════════════════════════════════════════════
-//  STATE
-// ══════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════
+//  CONSTANTS & STATE
+// ══════════════════════════════════════════════════════════════════
+const PH = [
+  `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><rect width="60" height="60" fill="#1f1f22"/><circle cx="30" cy="22" r="12" fill="#48474a"/><ellipse cx="30" cy="50" rx="18" ry="12" fill="#48474a"/><text x="30" y="27" text-anchor="middle" fill="#acaaad" font-size="13" font-family="monospace">?</text></svg>`,
+  `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><rect width="60" height="60" fill="#19191c"/><circle cx="30" cy="22" r="12" fill="#3e65ff" opacity="0.5"/><ellipse cx="30" cy="50" rx="18" ry="12" fill="#3e65ff" opacity="0.3"/><text x="30" y="27" text-anchor="middle" fill="#97a9ff" font-size="11" font-family="monospace">★</text></svg>`,
+  `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><rect width="60" height="60" fill="#131315"/><circle cx="30" cy="22" r="12" fill="#6a0baa" opacity="0.6"/><ellipse cx="30" cy="50" rx="18" ry="12" fill="#6a0baa" opacity="0.4"/><text x="30" y="27" text-anchor="middle" fill="#c57eff" font-size="11" font-family="monospace">◆</text></svg>`,
+  `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><rect width="60" height="60" fill="#1a1508"/><circle cx="30" cy="22" r="12" fill="#635200" opacity="0.7"/><ellipse cx="30" cy="50" rx="18" ry="12" fill="#635200" opacity="0.5"/><text x="30" y="27" text-anchor="middle" fill="#ffe484" font-size="11" font-family="monospace">🐝</text></svg>`,
+  `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><rect width="60" height="60" fill="#1a0a0c"/><circle cx="30" cy="22" r="12" fill="#a70138" opacity="0.6"/><ellipse cx="30" cy="50" rx="18" ry="12" fill="#a70138" opacity="0.4"/><text x="30" y="27" text-anchor="middle" fill="#ff6e84" font-size="11" font-family="monospace">✦</text></svg>`,
+];
+
+// Single source of truth
 const S = {
-  appId:'', token:'', channelName:'', rtmChannelName:'', localUid:null, userName:'',
-  maxVideoPlayers:10, isHost:false, boardSeed:0,
-  // RTC
-  client:null, localAudioTrack:null, localVideoTrack:null, remoteUsers:{},
+  // Config
+  appId:'', token:'', channelName:'', userName:'', maxVideoPlayers:10,
+  isHost:false, boardSeed:0, gameStarted:false,
+
+  // Agora RTC
+  rtcClient:null, localAudio:null, localVideo:null, remoteUsers:{},
   micOn:true, camOn:true,
-  // RTM
-  rtmClient:null,
-  // Game
-  participants:[], cards:[], cardPositions:[],
-  flippedCards:[], currentTurnIdx:0, scores:{},
-  myUid:null, canFlip:false, flipLock:false,
+
+  // Agora RTM
+  rtmClient:null, rtmChannelName:'', myUid:'',
+
+  // Participants: only NON-spectator, NON-placeholder humans in turn order
+  players:[],      // [{uid,name}]  — active video players (turn order)
+  spectators:[],   // [{uid,name}]  — over-limit joiners
+  allUsers:[],     // [{uid,name,isSpectator}] for sidebar
+
+  // Board
+  cards:[],        // [{id,pairId,participantUid,isPlaceholder,name,flipped,matched}]
+  positions:[],    // [{x,y,w,h,rot}] same seed = same layout everywhere
+  pendingIdx:-1,   // card index guest is waiting host to confirm (for pending CSS)
+
+  // Game flow
+  flipped:[],      // max 2 indices currently face-up & unmatched
+  turnIdx:0,       // index into players[]
+  scores:{},       // uid -> {name, pairs}
+  canFlip:false,
+  flipLock:false,
+  noMatchTimer:null,
+
+  // Timer
   timerStart:null, timerInterval:null,
 };
 
-const PH = [
-  `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><rect width="60" height="60" fill="#1f1f22"/><circle cx="30" cy="22" r="12" fill="#48474a"/><ellipse cx="30" cy="50" rx="18" ry="12" fill="#48474a"/><text x="30" y="27" text-anchor="middle" fill="#acaaad" font-size="13" font-family="monospace">?</text></svg>`,
-  `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><rect width="60" height="60" fill="#19191c"/><circle cx="30" cy="22" r="12" fill="#3e65ff" opacity="0.5"/><ellipse cx="30" cy="50" rx="18" ry="12" fill="#3e65ff" opacity="0.3"/><text x="30" y="27" text-anchor="middle" fill="#97a9ff" font-size="12" font-family="monospace">★</text></svg>`,
-  `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><rect width="60" height="60" fill="#131315"/><circle cx="30" cy="22" r="12" fill="#6a0baa" opacity="0.6"/><ellipse cx="30" cy="50" rx="18" ry="12" fill="#6a0baa" opacity="0.4"/><text x="30" y="27" text-anchor="middle" fill="#c57eff" font-size="12" font-family="monospace">◆</text></svg>`,
-  `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><rect width="60" height="60" fill="#1a1508"/><circle cx="30" cy="22" r="12" fill="#635200" opacity="0.7"/><ellipse cx="30" cy="50" rx="18" ry="12" fill="#635200" opacity="0.5"/><text x="30" y="27" text-anchor="middle" fill="#ffe484" font-size="12" font-family="monospace">⚡</text></svg>`,
-  `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><rect width="60" height="60" fill="#1a0a0c"/><circle cx="30" cy="22" r="12" fill="#a70138" opacity="0.6"/><ellipse cx="30" cy="50" rx="18" ry="12" fill="#a70138" opacity="0.4"/><text x="30" y="27" text-anchor="middle" fill="#ff6e84" font-size="12" font-family="monospace">✦</text></svg>`,
-];
-
-// ══════════════════════════════════════════════════════
-//  SEEDED RNG (mulberry32)
-// ══════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════
+//  SEEDED RNG  (mulberry32)
+// ══════════════════════════════════════════════════════════════════
 function mkRng(seed) {
-  return function() {
-    seed |= 0; seed = seed + 0x6D2B79F5 | 0;
-    let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
-    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+  let s = seed >>> 0;
+  return () => {
+    s = (s + 0x6D2B79F5) >>> 0;
+    let t = Math.imul(s ^ s >>> 15, 1 | s);
+    t = (t + Math.imul(t ^ t >>> 7, 61 | t)) ^ t;
     return ((t ^ t >>> 14) >>> 0) / 4294967296;
   };
 }
 function seededShuffle(arr, rng) {
-  for (let i = arr.length-1; i > 0; i--) {
-    const j = Math.floor(rng() * (i+1)); [arr[i],arr[j]] = [arr[j],arr[i]];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
   }
 }
 
-// ══════════════════════════════════════════════════════
-//  LOBBY
-// ══════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════
+//  LOBBY UI
+// ══════════════════════════════════════════════════════════════════
 let selectedMax = 10;
+
 function setTab(t) {
-  document.getElementById('tab-join').className   = t==='join'   ? 'flex-1 py-2.5 text-sm font-bold rounded-lg transition-all bg-surface-bright text-on-surface'   : 'flex-1 py-2.5 text-sm font-bold rounded-lg transition-all text-on-surface-variant';
-  document.getElementById('tab-create').className = t==='create' ? 'flex-1 py-2.5 text-sm font-bold rounded-lg transition-all bg-surface-bright text-on-surface' : 'flex-1 py-2.5 text-sm font-bold rounded-lg transition-all text-on-surface-variant';
-  document.getElementById('form-join').classList.toggle('hidden', t!=='join');
-  document.getElementById('form-create').classList.toggle('hidden', t!=='create');
+  const active   = 'flex-1 py-2.5 text-sm font-bold rounded-lg transition-all bg-surface-bright text-on-surface';
+  const inactive = 'flex-1 py-2.5 text-sm font-bold rounded-lg transition-all text-on-surface-variant';
+  g('tab-join').className   = t==='join'   ? active : inactive;
+  g('tab-create').className = t==='create' ? active : inactive;
+  g('form-join').classList.toggle('hidden', t!=='join');
+  g('form-create').classList.toggle('hidden', t!=='create');
 }
-function setMaxPlayers(n) {
+
+function setMax(n) {
   selectedMax = n;
-  document.getElementById('btn-max10').className = n===10 ? 'flex-1 py-2.5 rounded-xl text-sm font-bold border-2 border-primary bg-primary/10 text-primary transition-all' : 'flex-1 py-2.5 rounded-xl text-sm font-bold border-2 border-outline-variant text-on-surface-variant hover:border-primary hover:text-primary transition-all';
-  document.getElementById('btn-max20').className = n===20 ? 'flex-1 py-2.5 rounded-xl text-sm font-bold border-2 border-primary bg-primary/10 text-primary transition-all' : 'flex-1 py-2.5 rounded-xl text-sm font-bold border-2 border-outline-variant text-on-surface-variant hover:border-primary hover:text-primary transition-all';
-}
-function joinRoom() {
-  const name=g('join-name').value.trim(), room=g('join-room').value.trim().toUpperCase(),
-        appId=g('join-appid').value.trim(), token=g('join-token').value.trim();
-  if(!name)  return toast('Enter your name');
-  if(!room)  return toast('Enter a room code');
-  if(!appId) return toast('Enter your Agora App ID');
-  startGame(name,room,appId,token||'',10,false);
-}
-function createRoom() {
-  const name=g('create-name').value.trim(), room=g('create-room').value.trim().toUpperCase(),
-        appId=g('create-appid').value.trim(), token=g('create-token').value.trim();
-  if(!name)  return toast('Enter your name');
-  if(!room)  return toast('Enter a room name');
-  if(!appId) return toast('Enter your Agora App ID');
-  startGame(name,room,appId,token||'',selectedMax,true);
+  const on  = 'flex-1 py-2.5 rounded-xl text-sm font-bold border-2 border-primary bg-primary/10 text-primary transition-all';
+  const off = 'flex-1 py-2.5 rounded-xl text-sm font-bold border-2 border-outline-variant text-on-surface-variant hover:border-primary hover:text-primary transition-all';
+  g('btn-max10').className = n===10 ? on : off;
+  g('btn-max20').className = n===20 ? on : off;
 }
 
-// ══════════════════════════════════════════════════════
-//  STARTUP
-// ══════════════════════════════════════════════════════
-async function startGame(userName,channelName,appId,token,maxPlayers,asHost) {
-  Object.assign(S,{appId,token,channelName,userName,maxVideoPlayers:maxPlayers,isHost:asHost,
-    boardSeed:asHost?(Date.now()&0xFFFFFF):0, participants:[],cards:[],cardPositions:[],
-    flippedCards:[],currentTurnIdx:0,scores:{},canFlip:false,flipLock:false});
+async function doJoin() {
+  const name  = g('join-name').value.trim();
+  const room  = g('join-room').value.trim().toUpperCase();
+  const appId = g('join-appid').value.trim();
+  const token = g('join-token').value.trim();
+  if (!name)  return toast('Enter your name');
+  if (!room)  return toast('Enter a room code');
+  if (!appId) return toast('Enter your Agora App ID');
+  await connect(name, room, appId, token||'', 10, false);
+}
+
+async function doCreate() {
+  const name  = g('create-name').value.trim();
+  const room  = g('create-room').value.trim().toUpperCase();
+  const appId = g('create-appid').value.trim();
+  const token = g('create-token').value.trim();
+  if (!name)  return toast('Enter your name');
+  if (!room)  return toast('Enter a room name');
+  if (!appId) return toast('Enter your Agora App ID');
+  await connect(name, room, appId, token||'', selectedMax, true);
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  CONNECTION — RTC + RTM
+// ══════════════════════════════════════════════════════════════════
+async function connect(userName, channelName, appId, token, maxPlayers, asHost) {
+  Object.assign(S, {
+    appId, token, channelName, userName, maxVideoPlayers: maxPlayers,
+    isHost: asHost, gameStarted: false, boardSeed: 0,
+    players:[], spectators:[], allUsers:[],
+    cards:[], positions:[], flipped:[], turnIdx:0,
+    scores:{}, canFlip:false, flipLock:false, pendingIdx:-1,
+  });
+
   toast('Connecting…'); rtmDot('connecting');
-  try {
-    // RTC
-    S.client = AgoraRTC.createClient({mode:'rtc',codec:'vp8'});
-    setupRtcEvents();
-    S.localUid = await S.client.join(appId,channelName,token,null);
-    S.myUid = String(S.localUid);
-    [S.localAudioTrack,S.localVideoTrack] = await AgoraRTC.createMicrophoneAndCameraTracks();
-    await S.client.publish([S.localAudioTrack,S.localVideoTrack]);
 
-    // RTM v2
+  // ── Step 1: Request camera/mic — handle failure gracefully ──────
+  try {
+    [S.localAudio, S.localVideo] = await AgoraRTC.createMicrophoneAndCameraTracks();
+  } catch (permErr) {
+    console.warn('Camera/mic error:', permErr);
+    toast('⚠️ Camera/mic unavailable — joining audio-only');
+    try { S.localAudio = await AgoraRTC.createMicrophoneAudioTrack(); } catch(e) {}
+  }
+
+  // ── Step 2: RTC join ───────────────────────────────────────────
+  try {
+    S.rtcClient = AgoraRTC.createClient({ mode:'rtc', codec:'vp8' });
+    setupRtcEvents();
+    const uid = await S.rtcClient.join(appId, channelName, token||null, null);
+    S.myUid = String(uid);
+
+    const tracks = [S.localAudio, S.localVideo].filter(Boolean);
+    if (tracks.length) await S.rtcClient.publish(tracks);
+
+    // ── Step 3: RTM join ─────────────────────────────────────────
     const { RTM } = AgoraRTM;
     S.rtmClient = new RTM(appId, S.myUid, { token: token||undefined });
     setupRtmEvents();
@@ -335,620 +491,965 @@ async function startGame(userName,channelName,appId,token,maxPlayers,asHost) {
     S.rtmChannelName = channelName;
     rtmDot('connected');
 
-    addParticipant(S.myUid,userName,false,false);
-    initScore(S.myUid,userName);
-    broadcast({type:'HELLO',uid:S.myUid,name:userName,maxPlayers});
-
-    g('lobby-screen').classList.add('hidden');
-    g('game-screen').classList.remove('hidden');
-    g('header-room').textContent='Room: '+channelName;
-    startTimer();
-
-    if(asHost) {
-      buildAndBroadcast();
-    } else {
-      broadcast({type:'REQUEST_STATE',uid:S.myUid});
-      buildBoard(); renderBoard();
+    // Register self in role lists
+    if (asHost) {
+      S.players.push({ uid: S.myUid, name: userName });
+      S.allUsers.push({ uid: S.myUid, name: userName, isSpectator: false });
+      S.scores[S.myUid] = { name: userName, pairs: 0 };
     }
-    updateTurnBanner(); updateScores(); updatePlayers();
-    toast('Joined '+channelName+' as '+userName+'!');
-  } catch(err) {
-    console.error(err); rtmDot('error'); toast('Error: '+(err.message||err));
+
+    // Announce to channel
+    broadcast({ type:'HELLO', uid:S.myUid, name:userName });
+
+    if (asHost) {
+      // Host goes to waiting room
+      showScreen('waiting');
+      g('waiting-room-code').textContent = channelName;
+      refreshWaitingList();
+    } else {
+      // Guest: request current state, show game screen immediately
+      showScreen('game');
+      g('header-room').textContent = channelName;
+      startTimer();
+      broadcast({ type:'REQUEST_STATE', uid:S.myUid });
+      toast('Joined ' + channelName + '!');
+    }
+
+  } catch (err) {
+    console.error(err);
+    rtmDot('error');
+    toast('Error: ' + (err.message || err));
+    // Return to lobby if connection fails
+    showScreen('lobby');
   }
 }
 
-// ══════════════════════════════════════════════════════
-//  RTM
-// ══════════════════════════════════════════════════════
-function broadcast(obj) {
-  if(!S.rtmClient||!S.rtmChannelName) return;
-  S.rtmClient.publish(S.rtmChannelName, JSON.stringify(obj), {channelType:'MESSAGE'}).catch(()=>{});
+// ══════════════════════════════════════════════════════════════════
+//  WAITING ROOM (host only)
+// ══════════════════════════════════════════════════════════════════
+function refreshWaitingList() {
+  const el = g('waiting-players');
+  if (!el) return;
+  el.innerHTML = S.allUsers.map(u => `
+    <div class="flex items-center gap-3 px-3 py-2 rounded-xl bg-surface-container">
+      <div class="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center text-xs text-primary font-bold">${u.name.slice(0,2).toUpperCase()}</div>
+      <div class="text-sm font-bold">${u.name}${u.uid===S.myUid?' <span class="text-primary text-xs">(you · host)</span>':''}</div>
+      ${u.isSpectator?'<span class="ml-auto text-[9px] text-secondary font-bold uppercase">Spectator</span>':''}
+    </div>`).join('');
+  const count = S.players.length;
+  g('start-btn').textContent = count < 2 ? `Waiting (${count}/2 min)…` : 'Start Game ▶';
+  g('start-btn').disabled = count < 2;
+  g('start-btn').className = count < 2
+    ? 'flex-1 py-2.5 bg-surface-container-high text-on-surface-variant font-black rounded-xl text-sm uppercase tracking-wide cursor-not-allowed'
+    : 'flex-1 py-2.5 bg-gradient-to-r from-primary to-primary-container text-on-primary font-black rounded-xl text-sm uppercase tracking-wide hover:scale-[1.02] active:scale-[0.98] transition-transform';
 }
-function sendTo(uid,obj) {
-  if(!S.rtmClient) return;
-  // RTM v2 peer messaging via storage attribute trick — use a dedicated presence message channel instead
-  // For simplicity, broadcast with a target uid field; all clients ignore if not addressed to them
-  broadcast({...obj, _to: String(uid)});
+
+function hostStartGame() {
+  if (!S.isHost || S.players.length < 2) return;
+  S.gameStarted = true;
+  S.boardSeed = Date.now(); // full timestamp = better entropy (fix #9)
+  S.turnIdx = 0;
+  buildBoard();
+  showScreen('game');
+  g('header-room').textContent = S.channelName;
+  startTimer();
+  // Broadcast GAME_START so guests know the game is officially on
+  broadcast({
+    type: 'GAME_START',
+    seed: S.boardSeed,
+    maxPlayers: S.maxVideoPlayers,
+    players: S.players,
+    spectators: S.spectators,
+  });
+  renderBoard();
+  updateTurnBanner(); updateScores(); updatePlayersList();
+}
+
+function cancelWaiting() {
+  leaveRoom();
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  RTM MESSAGING
+// ══════════════════════════════════════════════════════════════════
+function broadcast(obj) {
+  if (!S.rtmClient || !S.rtmChannelName) return;
+  S.rtmClient.publish(S.rtmChannelName, JSON.stringify(obj), { channelType:'MESSAGE' }).catch(()=>{});
+}
+
+// True peer-to-peer using RTM v2 publishPeer
+function sendTo(uid, obj) {
+  if (!S.rtmClient) return;
+  S.rtmClient.publish(String(uid), JSON.stringify(obj), { channelType:'USER' }).catch(()=>{});
 }
 
 function setupRtmEvents() {
-  // RTM v2 uses addEventListener on the client instance.
-  // IMPORTANT: RTM v2 echoes our own published messages back to us, so we
-  // must explicitly ignore any message where publisher === our own UID.
   S.rtmClient.addEventListener('message', event => {
+    if (event.publisher === S.myUid) return; // ignore own echo
     try {
-      if(event.publisher === S.myUid) return; // ignore own echo
       const msg = JSON.parse(event.message);
-      // If message has a _to field, only process if it's addressed to us
-      if(msg._to && msg._to !== S.myUid) return;
       onMsg(msg, event.publisher);
     } catch(e) {}
   });
+
   S.rtmClient.addEventListener('presence', event => {
-    if(event.eventType === 'LEAVE' || event.eventType === 'TIMEOUT') {
-      peerLeft(event.publisher);
+    if (event.eventType === 'LEAVE' || event.eventType === 'TIMEOUT') {
+      onPeerLeft(event.publisher);
     }
   });
+
   S.rtmClient.addEventListener('status', event => {
-    if(event.state === 'CONNECTED') rtmDot('connected');
-    else if(event.state === 'CONNECTING') rtmDot('connecting');
-    else rtmDot('error');
+    const map = { CONNECTED:'connected', CONNECTING:'connecting', DISCONNECTED:'error' };
+    rtmDot(map[event.state] || 'error');
   });
 }
 
-function onMsg(m,from) {
-  switch(m.type) {
+// ══════════════════════════════════════════════════════════════════
+//  RTM MESSAGE HANDLER
+// ══════════════════════════════════════════════════════════════════
+function onMsg(m, from) {
+  switch (m.type) {
 
+    // ── Presence ───────────────────────────────────────────────
     case 'HELLO': {
-      if(!S.participants.find(p=>p.uid===m.uid)) {
-        const vc=S.participants.filter(p=>!p.isSpectator&&!p.isPlaceholder).length;
-        const spec=vc>=S.maxVideoPlayers;
-        addParticipant(m.uid,m.name,false,spec);
-        initScore(m.uid,m.name);
-        updatePlayers(); updateScores();
-        toast(m.name+(spec?' joined (spectator)':' joined!'));
-        if(S.isHost&&!spec) { setTimeout(()=>buildAndBroadcast(),200); }
+      if (S.allUsers.find(u => u.uid === m.uid)) break;
+      const isSpec = S.players.length >= S.maxVideoPlayers;
+      const user = { uid: m.uid, name: m.name, isSpectator: isSpec };
+      S.allUsers.push(user);
+      if (!isSpec) {
+        S.players.push({ uid: m.uid, name: m.name });
+        S.scores[m.uid] = { name: m.name, pairs: 0 };
+      } else {
+        S.spectators.push({ uid: m.uid, name: m.name });
       }
-      if(S.isHost) setTimeout(()=>sendFullState(m.uid),500);
+      toast(m.name + (isSpec ? ' joined as spectator' : ' joined!'));
+
+      if (S.isHost) {
+        refreshWaitingList();
+        // Send current state P2P — not exposed to whole channel (fix #2)
+        setTimeout(() => sendCurrentStateTo(m.uid), 400);
+      }
+      if (S.gameStarted) { updatePlayersList(); updateScores(); }
       break;
     }
 
     case 'REQUEST_STATE': {
-      if(S.isHost) sendFullState(m.uid);
+      if (S.isHost) sendCurrentStateTo(m.uid);
       break;
     }
 
+    // ── Host → guest: full state snapshot (P2P, not broadcast) ─
     case 'FULL_STATE': {
-      if(S.isHost) break;
-      S.boardSeed=m.seed; S.maxVideoPlayers=m.maxPlayers;
-      S.participants=m.participants; S.scores=m.scores; S.currentTurnIdx=m.currentTurnIdx;
-      S.cards=m.cards;
-      computeHive();
+      applyFullState(m);
+      break;
+    }
+
+    // ── Host → all: game is starting ───────────────────────────
+    case 'GAME_START': {
+      if (S.isHost) break;
+      S.boardSeed = m.seed;
+      S.maxVideoPlayers = m.maxPlayers;
+      S.players = m.players;
+      S.spectators = m.spectators || [];
+      S.allUsers = [
+        ...m.players.map(p => ({ ...p, isSpectator:false })),
+        ...(m.spectators||[]).map(p => ({ ...p, isSpectator:true })),
+      ];
+      m.players.forEach(p => { if (!S.scores[p.uid]) S.scores[p.uid] = { name:p.name, pairs:0 }; });
+      S.gameStarted = true; S.turnIdx = 0;
+      buildBoard();
+      showScreen('game');
+      g('header-room').textContent = S.channelName;
+      startTimer();
       renderBoard();
-      S.canFlip=S.myUid===S.participants[S.currentTurnIdx]?.uid;
-      updateTurnBanner(); updateScores(); updatePlayers();
+      S.canFlip = S.myUid === S.players[0]?.uid;
+      updateTurnBanner(); updateScores(); updatePlayersList();
+      toast('Game started!');
       break;
     }
 
-    case 'BOARD_INIT': {
-      if(S.isHost) break;
-      S.boardSeed=m.seed; S.maxVideoPlayers=m.maxPlayers;
-      S.participants=m.participants; S.scores={};
-      m.participants.forEach(p=>initScore(p.uid,p.name));
-      buildBoard(); renderBoard();
-      updateTurnBanner(); updateScores(); updatePlayers();
-      break;
-    }
-
+    // ── Flip flow ───────────────────────────────────────────────
     case 'FLIP_REQUEST': {
-      if(!S.isHost) break;
-      const cur=S.participants[S.currentTurnIdx];
-      if(!cur||cur.uid!==m.uid) break;
-      if(S.flipLock||S.flippedCards.length>=2) break;
+      if (!S.isHost || !S.gameStarted) break;
+      const cur = S.players[S.turnIdx];
+      if (!cur || cur.uid !== m.uid) break;
+      if (S.flipLock || S.flipped.length >= 2) break;
+      if (S.cards[m.cardIdx]?.flipped || S.cards[m.cardIdx]?.matched) break;
       hostFlip(m.cardIdx);
       break;
     }
 
     case 'CARD_FLIPPED': {
-      if(!S.isHost) applyFlip(m.cardIdx);
+      if (S.isHost) break; // host already applied locally
+      clearPending();
+      applyFlip(m.cardIdx);
       break;
     }
 
     case 'NO_MATCH': {
-      if(!S.isHost) applyNoMatch(m.i1,m.i2,m.next);
+      if (S.isHost) break;
+      applyNoMatch(m.i1, m.i2, m.next);
       break;
     }
 
     case 'MATCH': {
-      if(!S.isHost) applyMatch(m.i1,m.i2,m.scorer,m.next);
+      if (S.isHost) break;
+      applyMatch(m.i1, m.i2, m.scorer, m.next);
       break;
     }
 
     case 'GAME_OVER': {
-      if(!S.isHost) endGame();
+      if (!S.isHost) endGame(m.scores);
       break;
     }
 
     case 'RESET': {
-      if(S.isHost) break;
-      S.boardSeed=m.seed;
-      buildBoard();
-      Object.keys(S.scores).forEach(u=>S.scores[u].pairs=0);
-      S.currentTurnIdx=0; S.flippedCards=[]; S.flipLock=false;
-      S.canFlip=S.myUid===S.participants[0]?.uid;
-      renderBoard(); updateScores(); updateTurnBanner(); updateHeaderScore();
+      if (S.isHost) break;
+      applyReset(m);
       break;
     }
 
     case 'CHAT': {
-      appendChat(m.name,m.text,m.uid===S.myUid);
+      appendChat(m.name, m.text, false);
       break;
     }
   }
 }
 
-// ══════════════════════════════════════════════════════
-//  HOST HELPERS
-// ══════════════════════════════════════════════════════
-function buildAndBroadcast() {
-  buildBoard(); renderBoard();
-  broadcast({type:'BOARD_INIT',seed:S.boardSeed,maxPlayers:S.maxVideoPlayers,participants:S.participants});
-  updateTurnBanner(); updateScores(); updatePlayers();
+// ══════════════════════════════════════════════════════════════════
+//  HOST: send full state to one peer (P2P — fix #2)
+// ══════════════════════════════════════════════════════════════════
+function sendCurrentStateTo(peerUid) {
+  sendTo(peerUid, {
+    type: 'FULL_STATE',
+    seed: S.boardSeed,
+    maxPlayers: S.maxVideoPlayers,
+    players: S.players,
+    spectators: S.spectators,
+    cards: S.cards.map(c => ({
+      id:c.id, pairId:c.pairId, participantUid:c.participantUid,
+      isPlaceholder:c.isPlaceholder, name:c.name, flipped:c.flipped, matched:c.matched,
+    })),
+    scores: S.scores,
+    turnIdx: S.turnIdx,
+    gameStarted: S.gameStarted,
+  });
 }
 
-function sendFullState(peerUid) {
-  sendTo(peerUid,{type:'FULL_STATE',seed:S.boardSeed,maxPlayers:S.maxVideoPlayers,
-    participants:S.participants,
-    cards:S.cards.map(c=>({id:c.id,pairId:c.pairId,participantUid:c.participantUid,
-      isPlaceholder:c.isPlaceholder,name:c.name,flipped:c.flipped,matched:c.matched})),
-    scores:S.scores, currentTurnIdx:S.currentTurnIdx});
+function applyFullState(m) {
+  S.boardSeed = m.seed; S.maxVideoPlayers = m.maxPlayers;
+  S.players = m.players; S.spectators = m.spectators || [];
+  S.allUsers = [
+    ...m.players.map(p => ({ ...p, isSpectator:false })),
+    ...(m.spectators||[]).map(p => ({ ...p, isSpectator:true })),
+  ];
+  S.scores = m.scores; S.turnIdx = m.turnIdx; S.gameStarted = m.gameStarted;
+  S.cards = m.cards; S.flipped = []; S.flipLock = false;
+  S.canFlip = S.myUid === S.players[S.turnIdx]?.uid;
+  if (S.gameStarted) {
+    computeHive();
+    renderBoard();
+    showScreen('game');
+    g('header-room').textContent = S.channelName;
+    startTimer();
+  }
+  updateTurnBanner(); updateScores(); updatePlayersList();
 }
 
-function hostFlip(idx) {
-  broadcast({type:'CARD_FLIPPED',cardIdx:idx});
-  applyFlip(idx);
-}
-
-// ══════════════════════════════════════════════════════
-//  BOARD BUILD (seeded, deterministic)
-// ══════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════
+//  BOARD BUILD (seeded — fix #9: use full timestamp)
+// ══════════════════════════════════════════════════════════════════
 function buildBoard() {
   const rng = mkRng(S.boardSeed);
-  const real = S.participants.filter(p=>!p.isSpectator&&!p.isPlaceholder);
-  const sources=[...real];
-  let ph=0;
-  while(sources.length<S.maxVideoPlayers) { sources.push({uid:'ph_'+ph,name:'Guest',isPlaceholder:true,isSpectator:false}); ph++; }
-  let cards=[];
-  sources.forEach((src,i)=>{
-    cards.push({id:i*2,  pairId:i,participantUid:src.uid,isPlaceholder:!!src.isPlaceholder,name:src.name,flipped:false,matched:false});
-    cards.push({id:i*2+1,pairId:i,participantUid:src.uid,isPlaceholder:!!src.isPlaceholder,name:src.name,flipped:false,matched:false});
+  // Only real video players get cards; placeholders fill the rest
+  const sources = [...S.players];
+  let ph = 0;
+  while (sources.length < S.maxVideoPlayers) {
+    sources.push({ uid:'ph_'+ph, name:'Guest', isPlaceholder:true });
+    ph++;
+  }
+  let cards = [];
+  sources.forEach((src, i) => {
+    const base = { pairId:i, participantUid:src.uid, isPlaceholder:!!src.isPlaceholder, name:src.name, flipped:false, matched:false };
+    cards.push({ ...base, id: i*2   });
+    cards.push({ ...base, id: i*2+1 });
   });
-  seededShuffle(cards,rng);
-  S.cards=cards; S.flippedCards=[]; S.flipLock=false;
-  S.canFlip=S.myUid===S.participants[S.currentTurnIdx]?.uid;
+  seededShuffle(cards, rng);
+  S.cards = cards;
+  S.flipped = []; S.flipLock = false;
+  S.canFlip = S.myUid === S.players[S.turnIdx]?.uid;
   computeHive();
 }
 
-// ══════════════════════════════════════════════════════
-//  HIVE LAYOUT
-// ══════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════
+//  HIVE LAYOUT — positions only, no DOM (fix #14)
+// ══════════════════════════════════════════════════════════════════
 function computeHive() {
-  const n=S.cards.length;
-  if(!n) return;
-  const rng=mkRng(S.boardSeed+9999);
-  const wrap=g('board-wrapper');
-  const W=wrap?wrap.clientWidth||800:800;
-  const H=wrap?wrap.clientHeight||500:500;
+  const n = S.cards.length;
+  if (!n) return;
+  const rng = mkRng(S.boardSeed + 9999);
+  const wrap = g('board-wrapper');
+  const W = wrap ? (wrap.clientWidth  || 800) : 800;
+  const H = wrap ? (wrap.clientHeight || 500) : 500;
 
-  const cols=S.maxVideoPlayers<=10?6:8;
-  const cardSz=Math.min(Math.floor(W/(cols+0.9)),Math.floor(H/(Math.ceil(n/cols)+0.9)),118);
-  const gapX=cardSz*0.15, gapY=cardSz*0.2;
-  const cellW=cardSz+gapX, cellH=cardSz+gapY;
-  const rows=Math.ceil(n/cols);
-  const gridW=cols*cellW, gridH=rows*cellH;
-  const ox=Math.max(4,(W-gridW)/2), oy=Math.max(8,(H-gridH)/2);
+  const cols = S.maxVideoPlayers <= 10 ? 6 : 8;
+  const cardSz = Math.min(
+    Math.floor(W / (cols + 0.9)),
+    Math.floor(H / (Math.ceil(n / cols) + 0.9)),
+    118
+  );
+  const gapX = cardSz * 0.15, gapY = cardSz * 0.2;
+  const cellW = cardSz + gapX, cellH = cardSz + gapY;
+  const rows = Math.ceil(n / cols);
+  const ox = Math.max(4, (W - cols * cellW) / 2);
+  const oy = Math.max(8, (H - rows * cellH) / 2);
 
-  S.cardPositions=S.cards.map((_,i)=>{
-    const col=i%cols, row=Math.floor(i/cols);
-    const hiveOff=(row%2)*cellW*0.48;
-    const jx=(rng()-0.5)*cardSz*0.30;
-    const jy=(rng()-0.5)*cardSz*0.30;
-    const rot=(rng()-0.5)*13;
-    return {x:ox+hiveOff+col*cellW+jx, y:oy+row*cellH+jy, w:cardSz, h:cardSz, rot};
+  S.positions = S.cards.map((_, i) => {
+    const col = i % cols, row = Math.floor(i / cols);
+    const hive = (row % 2) * cellW * 0.48;
+    return {
+      x: ox + hive + col * cellW + (rng() - 0.5) * cardSz * 0.28,
+      y: oy + row  * cellH       + (rng() - 0.5) * cardSz * 0.28,
+      w: cardSz, h: cardSz,
+      rot: (rng() - 0.5) * 13,
+    };
   });
 
-  const brd=g('board');
-  if(brd) {
-    const mx=Math.max(...S.cardPositions.map(p=>p.x+p.w))+20;
-    const my=Math.max(...S.cardPositions.map(p=>p.y+p.h))+20;
-    brd.style.width=Math.max(W,mx)+'px';
-    brd.style.height=Math.max(H,my)+'px';
+  // Size the board container
+  const brd = g('board');
+  if (brd) {
+    brd.style.width  = Math.max(W, Math.max(...S.positions.map(p => p.x + p.w)) + 20) + 'px';
+    brd.style.height = Math.max(H, Math.max(...S.positions.map(p => p.y + p.h)) + 20) + 'px';
   }
 }
 
-// ══════════════════════════════════════════════════════
-//  RENDER BOARD
-// ══════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════
+//  RENDER BOARD — full rebuild (called on init and game reset only)
+// ══════════════════════════════════════════════════════════════════
 function renderBoard() {
-  if(!S.cardPositions.length&&S.cards.length) computeHive();
-  const brd=g('board'); if(!brd) return;
-  brd.querySelectorAll('video').forEach(v=>{ if(v._ct) try{v._ct.stop()}catch(_){} });
-  brd.innerHTML='';
+  if (!S.positions.length && S.cards.length) computeHive();
+  const brd = g('board');
+  if (!brd) return;
 
-  S.cards.forEach((card,idx)=>{
-    const p=S.cardPositions[idx]||{x:0,y:0,w:80,h:80,rot:0};
-    const scene=document.createElement('div');
-    scene.className='card-scene'; scene.id='card-'+idx;
-    scene.style.cssText=`left:${p.x}px;top:${p.y}px;width:${p.w}px;height:${p.h}px;transform:rotate(${p.rot}deg);transition:transform 0.2s;z-index:1`;
-    scene.addEventListener('mouseenter',()=>{ scene.style.transform=`rotate(${p.rot}deg) scale(1.07) translateY(-3px)`; scene.style.zIndex='10'; });
-    scene.addEventListener('mouseleave',()=>{ scene.style.transform=`rotate(${p.rot}deg)`; scene.style.zIndex='1'; });
+  // Clean up existing cloned tracks before wiping DOM
+  brd.querySelectorAll('video').forEach(v => { if (v._ct) try { v._ct.stop(); } catch(_) {} });
+  brd.innerHTML = '';
 
-    const inner=document.createElement('div');
-    inner.className='card-inner'+(card.flipped||card.matched?' flipped':'')+(card.matched?' card-matched':'');
+  S.cards.forEach((card, idx) => {
+    const p = S.positions[idx] || { x:0, y:0, w:80, h:80, rot:0 };
+    const scene = document.createElement('div');
+    scene.className = 'card-scene';
+    scene.id = 'card-' + idx;
+    scene.style.cssText = `left:${p.x}px;top:${p.y}px;width:${p.w}px;height:${p.h}px;transform:rotate(${p.rot}deg);z-index:1;transition:transform 0.18s`;
 
-    const front=document.createElement('div');
-    front.className='card-front flex items-center justify-center cursor-pointer border border-primary/15 hover:border-primary/50 transition-colors';
-    if(!card.matched) front.onclick=()=>requestFlip(idx);
-    front.innerHTML=`<span class="material-symbols-outlined text-primary/25" style="font-size:${Math.max(14,p.w*0.3)}px;font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24">electric_bolt</span>`;
+    scene.addEventListener('mouseenter', () => {
+      scene.style.transform = `rotate(${p.rot}deg) scale(1.07) translateY(-3px)`;
+      scene.style.zIndex = '10';
+    });
+    scene.addEventListener('mouseleave', () => {
+      scene.style.transform = `rotate(${p.rot}deg)`;
+      scene.style.zIndex = '1';
+    });
 
-    const back=document.createElement('div');
-    back.className='card-back video-container'+(card.matched?' border-2 border-primary':'');
-    back.id='card-back-'+idx;
+    const inner = document.createElement('div');
+    inner.className = 'card-inner'
+      + (card.flipped || card.matched ? ' flipped' : '')
+      + (card.matched ? ' card-matched' : '');
 
-    const lbl=document.createElement('div');
-    lbl.className='absolute bottom-0.5 left-0.5 bg-black/70 px-1 rounded text-white uppercase font-bold z-10';
-    lbl.style.fontSize=Math.max(7,p.w*0.09)+'px';
-    lbl.textContent=card.name.slice(0,10);
+    // Front
+    const front = document.createElement('div');
+    front.className = 'card-front flex items-center justify-center';
+    if (!card.matched) front.onclick = () => requestFlip(idx);
+    front.innerHTML = `<span class="material-symbols-outlined ms-fill text-primary/20" style="font-size:${Math.max(14, p.w*0.3)}px">electric_bolt</span>`;
+
+    // Back
+    const back = document.createElement('div');
+    back.className = 'card-back' + (card.matched ? ' border-2 border-primary' : '');
+    back.id = 'card-back-' + idx;
+    // Name label
+    const lbl = document.createElement('div');
+    lbl.className = 'absolute bottom-0.5 left-0.5 bg-black/70 px-1 rounded text-white uppercase font-bold z-10';
+    lbl.style.fontSize = Math.max(7, p.w * 0.09) + 'px';
+    lbl.textContent = card.name.slice(0, 10);
     back.appendChild(lbl);
 
-    const part=S.participants.find(pp=>pp.uid===card.participantUid);
-    if(part?.isSpectator) { const b=document.createElement('div'); b.className='spectator-badge'; b.textContent='Spec'; back.appendChild(b); }
-
-    inner.appendChild(front); inner.appendChild(back);
-    scene.appendChild(inner); brd.appendChild(scene);
+    inner.appendChild(front);
+    inner.appendChild(back);
+    scene.appendChild(inner);
+    brd.appendChild(scene);
   });
-  setTimeout(()=>renderVideos(),60);
+
+  setTimeout(() => renderAllVideos(), 60);
   updateCardsLeft();
 }
 
-// ══════════════════════════════════════════════════════
-//  VIDEO — cloned tracks
-// ══════════════════════════════════════════════════════
-function playTrack(agoraTrack,container) {
-  const raw=agoraTrack.getMediaStreamTrack?agoraTrack.getMediaStreamTrack():null;
-  const v=document.createElement('video');
-  v.autoplay=true; v.muted=true; v.playsInline=true;
-  v.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;';
-  if(raw) { const cl=raw.clone(); v.srcObject=new MediaStream([cl]); v._ct=cl; }
-  container.appendChild(v); v.play().catch(()=>{});
-}
-
-function renderVideos() {
-  S.cards.forEach((card,idx)=>{
-    const back=g('card-back-'+idx); if(!back) return;
-    back.querySelectorAll('video').forEach(v=>{ if(v._ct) try{v._ct.stop()}catch(_){} });
-    back.querySelectorAll('.cvw').forEach(el=>el.remove());
-    const wrap=document.createElement('div'); wrap.className='cvw absolute inset-0';
-
-    if(card.isPlaceholder) {
-      const pi=parseInt(card.pairId)%PH.length;
-      wrap.innerHTML=PH[pi];
-      const sv=wrap.querySelector('svg');
-      if(sv){sv.setAttribute('width','100%');sv.setAttribute('height','100%');}
-      back.insertBefore(wrap,back.firstChild); return;
-    }
-
-    const uid=card.participantUid;
-    if(uid===S.myUid&&S.localVideoTrack) { playTrack(S.localVideoTrack,wrap); back.insertBefore(wrap,back.firstChild); return; }
-    const rem=S.remoteUsers[uid];
-    if(rem?.videoTrack) { playTrack(rem.videoTrack,wrap); back.insertBefore(wrap,back.firstChild); }
-    else {
-      wrap.className+=' flex items-center justify-center bg-surface-container';
-      wrap.innerHTML=`<span class="material-symbols-outlined text-on-surface-variant" style="font-size:28px">person</span>`;
-      back.insertBefore(wrap,back.firstChild);
-    }
+// ══════════════════════════════════════════════════════════════════
+//  RESIZE — only reposition, don't rebuild DOM (fix #14)
+// ══════════════════════════════════════════════════════════════════
+function repositionCards() {
+  if (!S.cards.length) return;
+  computeHive();
+  S.cards.forEach((_, idx) => {
+    const scene = g('card-' + idx);
+    const p = S.positions[idx];
+    if (!scene || !p) return;
+    scene.style.left   = p.x + 'px';
+    scene.style.top    = p.y + 'px';
+    scene.style.width  = p.w + 'px';
+    scene.style.height = p.h + 'px';
+    scene.style.transform = `rotate(${p.rot}deg)`;
+    // Update bolt icon size
+    const bolt = scene.querySelector('.ms-fill');
+    if (bolt) bolt.style.fontSize = Math.max(14, p.w*0.3) + 'px';
+    // Update label size
+    const lbl = scene.querySelector('.absolute');
+    if (lbl) lbl.style.fontSize = Math.max(7, p.w*0.09) + 'px';
   });
 }
 
-// ══════════════════════════════════════════════════════
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(repositionCards, 220);
+});
+
+// ══════════════════════════════════════════════════════════════════
+//  VIDEO — cloned tracks, per-card (fix #5: only update changed cards)
+// ══════════════════════════════════════════════════════════════════
+function playTrack(agoraTrack, container) {
+  const raw = agoraTrack.getMediaStreamTrack ? agoraTrack.getMediaStreamTrack() : null;
+  const v = document.createElement('video');
+  v.autoplay = true; v.muted = true; v.playsInline = true;
+  v.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;';
+  if (raw) { const cl = raw.clone(); v.srcObject = new MediaStream([cl]); v._ct = cl; }
+  container.appendChild(v);
+  v.play().catch(() => {});
+}
+
+function renderVideoForCard(card, back) {
+  // Stop old cloned tracks
+  back.querySelectorAll('video').forEach(v => { if (v._ct) try { v._ct.stop(); } catch(_) {} });
+  back.querySelectorAll('.cvw').forEach(el => el.remove());
+
+  const wrap = document.createElement('div');
+  wrap.className = 'cvw absolute inset-0';
+
+  if (card.isPlaceholder) {
+    const pi = card.pairId % PH.length;
+    wrap.innerHTML = PH[pi];
+    const sv = wrap.querySelector('svg');
+    if (sv) { sv.setAttribute('width','100%'); sv.setAttribute('height','100%'); }
+    back.insertBefore(wrap, back.firstChild);
+    return;
+  }
+
+  const uid = card.participantUid;
+  if (uid === S.myUid && S.localVideo) {
+    playTrack(S.localVideo, wrap);
+  } else {
+    const rem = S.remoteUsers[uid];
+    if (rem?.videoTrack) {
+      playTrack(rem.videoTrack, wrap);
+    } else {
+      wrap.className += ' flex items-center justify-center bg-surface-container';
+      wrap.innerHTML = `<span class="material-symbols-outlined ms text-on-surface-variant" style="font-size:28px">person</span>`;
+    }
+  }
+  back.insertBefore(wrap, back.firstChild);
+}
+
+function renderAllVideos() {
+  S.cards.forEach((card, idx) => {
+    const back = g('card-back-' + idx);
+    if (back) renderVideoForCard(card, back);
+  });
+}
+
+// Only re-render video for specific cards (fix #5)
+function renderVideosForIndices(indices) {
+  indices.forEach(idx => {
+    const back = g('card-back-' + idx);
+    if (back) renderVideoForCard(S.cards[idx], back);
+  });
+}
+
+// ══════════════════════════════════════════════════════════════════
 //  GAME LOGIC
-// ══════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════
 function requestFlip(idx) {
-  const card=S.cards[idx];
-  if(!S.canFlip) { toast("It's not your turn!"); return; }
-  if(card.flipped||card.matched) return;
-  if(S.flippedCards.length>=2||S.flipLock) return;
-  if(S.isHost) { hostFlip(idx); }
-  else { broadcast({type:'FLIP_REQUEST',cardIdx:idx,uid:S.myUid}); S.flipLock=true; setTimeout(()=>{S.flipLock=false;},2000); }
+  const card = S.cards[idx];
+  if (!S.canFlip)          { toast("It's not your turn!"); return; }
+  if (!S.gameStarted)      { toast('Game not started yet'); return; }
+  if (card.flipped || card.matched) return;
+  if (S.flipped.length >= 2 || S.flipLock) return;
+
+  if (S.isHost) {
+    hostFlip(idx);
+  } else {
+    // Optimistic visual: mark card as pending while waiting for host (fix #7)
+    S.pendingIdx = idx;
+    g('card-' + idx)?.classList.add('card-pending');
+    broadcast({ type:'FLIP_REQUEST', cardIdx:idx, uid:S.myUid });
+  }
+}
+
+function clearPending() {
+  if (S.pendingIdx >= 0) {
+    g('card-' + S.pendingIdx)?.classList.remove('card-pending');
+    S.pendingIdx = -1;
+  }
+}
+
+function hostFlip(idx) {
+  broadcast({ type:'CARD_FLIPPED', cardIdx:idx });
+  applyFlip(idx);
 }
 
 function applyFlip(idx) {
-  const card=S.cards[idx]; if(!card||card.matched) return;
-  card.flipped=true; S.flippedCards.push(idx); S.flipLock=true;
-  g('card-'+idx)?.querySelector('.card-inner')?.classList.add('flipped');
-  renderVideos();
-  if(S.flippedCards.length===2) {
-    S.canFlip=false;
-    if(S.isHost) setTimeout(()=>hostCheckMatch(),1100);
+  const card = S.cards[idx];
+  if (!card || card.matched) return;
+  card.flipped = true;
+  S.flipped.push(idx);
+
+  const inner = g('card-' + idx)?.querySelector('.card-inner');
+  if (inner) inner.classList.add('flipped');
+
+  // Only render video for this specific card (fix #5)
+  const back = g('card-back-' + idx);
+  if (back) renderVideoForCard(card, back);
+
+  if (S.flipped.length === 2) {
+    S.flipLock = true;
+    S.canFlip  = false;
+    if (S.isHost) {
+      // Cancel any stale no-match timer before checking (fix #4)
+      clearTimeout(S.noMatchTimer);
+      S.noMatchTimer = null;
+      setTimeout(() => hostCheckMatch(), 1100);
+    }
   }
 }
 
 function hostCheckMatch() {
-  const [i1,i2]=S.flippedCards;
-  const c1=S.cards[i1],c2=S.cards[i2];
-  const cur=S.participants[S.currentTurnIdx];
-  if(c1.pairId===c2.pairId) {
-    broadcast({type:'MATCH',i1,i2,scorer:cur?.uid,next:S.currentTurnIdx});
-    applyMatch(i1,i2,cur?.uid,S.currentTurnIdx);
-    if(S.cards.every(c=>c.matched)) setTimeout(()=>{ broadcast({type:'GAME_OVER'}); endGame(); },600);
+  if (S.flipped.length < 2) return; // guard against race
+  const [i1, i2] = S.flipped;
+  const c1 = S.cards[i1], c2 = S.cards[i2];
+  const cur = S.players[S.turnIdx];
+
+  if (c1.pairId === c2.pairId) {
+    // Match — same player keeps turn
+    broadcast({ type:'MATCH', i1, i2, scorer:cur?.uid, next:S.turnIdx });
+    applyMatch(i1, i2, cur?.uid, S.turnIdx);
+    if (S.cards.every(c => c.matched)) {
+      setTimeout(() => {
+        broadcast({ type:'GAME_OVER', scores:S.scores });
+        endGame(S.scores);
+      }, 500);
+    }
   } else {
-    const next=(S.currentTurnIdx+1)%Math.max(S.participants.length,1);
-    broadcast({type:'NO_MATCH',i1,i2,next});
-    applyNoMatch(i1,i2,next);
+    // No match — next player (fix #8: skip spectators — players[] has no spectators)
+    const next = (S.turnIdx + 1) % Math.max(S.players.length, 1);
+    broadcast({ type:'NO_MATCH', i1, i2, next });
+    applyNoMatch(i1, i2, next);
   }
 }
 
-function applyMatch(i1,i2,scorer,next) {
-  S.cards[i1].matched=true; S.cards[i2].matched=true;
-  if(scorer&&S.scores[scorer]) S.scores[scorer].pairs++;
-  [i1,i2].forEach(i=>{
-    g('card-'+i)?.querySelector('.card-inner')?.classList.add('card-matched');
-    g('card-back-'+i)?.classList.add('border-2','border-primary');
+function applyMatch(i1, i2, scorerUid, next) {
+  S.cards[i1].matched = true;
+  S.cards[i2].matched = true;
+  if (scorerUid && S.scores[scorerUid]) S.scores[scorerUid].pairs++;
+
+  [i1, i2].forEach(i => {
+    g('card-' + i)?.querySelector('.card-inner')?.classList.add('card-matched');
+    g('card-back-' + i)?.classList.add('border-2', 'border-primary');
+    // Remove click handler
+    g('card-' + i)?.querySelector('.card-front')?.removeAttribute('onclick');
   });
-  S.flippedCards=[]; S.flipLock=false; S.currentTurnIdx=next;
-  S.canFlip=S.myUid===S.participants[next]?.uid;
-  if(scorer===S.myUid){bumpScore();toast('✨ Match! +1 Pair');}
+
+  S.flipped = []; S.flipLock = false;
+  S.turnIdx = next;
+  S.canFlip = S.myUid === S.players[next]?.uid;
+
+  if (scorerUid === S.myUid) { bumpScore(); toast('✨ Match! +1 Pair'); }
   updateScores(); updateHeaderScore(); updateCardsLeft(); updateTurnBanner();
 }
 
-function applyNoMatch(i1,i2,next) {
-  setTimeout(()=>{
-    if(S.cards[i1]) S.cards[i1].flipped=false;
-    if(S.cards[i2]) S.cards[i2].flipped=false;
-    [i1,i2].forEach(i=>{ g('card-'+i)?.querySelector('.card-inner')?.classList.remove('flipped'); });
-    S.flippedCards=[]; S.flipLock=false; S.currentTurnIdx=next;
-    S.canFlip=S.myUid===S.participants[next]?.uid;
+function applyNoMatch(i1, i2, next) {
+  // Fix #4: store timer ref so it can be cancelled on reset
+  S.noMatchTimer = setTimeout(() => {
+    S.noMatchTimer = null;
+    if (S.cards[i1]) S.cards[i1].flipped = false;
+    if (S.cards[i2]) S.cards[i2].flipped = false;
+    [i1, i2].forEach(i => g('card-' + i)?.querySelector('.card-inner')?.classList.remove('flipped'));
+    S.flipped = []; S.flipLock = false;
+    S.turnIdx = next;
+    S.canFlip = S.myUid === S.players[next]?.uid;
     updateTurnBanner();
-  },700);
+  }, 750);
 }
 
-// ══════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════
 //  RTC EVENTS
-// ══════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════
 function setupRtcEvents() {
-  S.client.on('user-published',async(user,mt)=>{
-    await S.client.subscribe(user,mt);
-    const uid=user.uid;
-    if(!S.remoteUsers[uid]) S.remoteUsers[uid]={user,videoTrack:null,audioTrack:null};
-    if(mt==='video') S.remoteUsers[uid].videoTrack=user.videoTrack;
-    if(mt==='audio'){ S.remoteUsers[uid].audioTrack=user.audioTrack; user.audioTrack.play(); }
-    renderVideos();
+  S.rtcClient.on('user-published', async (user, mt) => {
+    await S.rtcClient.subscribe(user, mt);
+    const uid = user.uid;
+    if (!S.remoteUsers[uid]) S.remoteUsers[uid] = { user, videoTrack:null, audioTrack:null };
+    if (mt === 'video') { S.remoteUsers[uid].videoTrack = user.videoTrack; }
+    if (mt === 'audio') { S.remoteUsers[uid].audioTrack = user.audioTrack; user.audioTrack.play(); }
+    // Only re-render cards belonging to this user (fix #5)
+    const indices = S.cards.reduce((acc, c, i) => { if (String(c.participantUid) === String(uid)) acc.push(i); return acc; }, []);
+    if (indices.length) renderVideosForIndices(indices);
   });
-  S.client.on('user-unpublished',(user,mt)=>{
-    if(S.remoteUsers[user.uid]){
-      if(mt==='video') S.remoteUsers[user.uid].videoTrack=null;
-      if(mt==='audio') S.remoteUsers[user.uid].audioTrack=null;
+
+  S.rtcClient.on('user-unpublished', (user, mt) => {
+    if (S.remoteUsers[user.uid]) {
+      if (mt === 'video') S.remoteUsers[user.uid].videoTrack = null;
+      if (mt === 'audio') S.remoteUsers[user.uid].audioTrack = null;
     }
-    renderVideos();
   });
-  S.client.on('user-left',user=>{ delete S.remoteUsers[user.uid]; renderVideos(); });
+
+  S.rtcClient.on('user-left', user => { delete S.remoteUsers[user.uid]; });
 }
 
-function peerLeft(uid) {
-  const idx=S.participants.findIndex(p=>p.uid===uid);
-  if(idx===-1) return;
-  const name=S.participants[idx].name;
-  S.participants.splice(idx,1);
-  toast(name+' left');
-  if(S.currentTurnIdx>=S.participants.length) S.currentTurnIdx=0;
-  S.canFlip=S.myUid===S.participants[S.currentTurnIdx]?.uid;
-  updatePlayers(); updateScores(); updateTurnBanner();
+// ══════════════════════════════════════════════════════════════════
+//  PEER LEFT  (fix #3: detect host departure)
+// ══════════════════════════════════════════════════════════════════
+function onPeerLeft(uid) {
+  // Check if the leaver was the host (first player to join = players[0] at game start)
+  // We don't track hostUid explicitly, but we can warn if the game was running
+  const wasInPlayers = S.players.findIndex(p => p.uid === uid);
+  const inAll = S.allUsers.findIndex(u => u.uid === uid);
+
+  if (inAll >= 0) {
+    const name = S.allUsers[inAll].name;
+    S.allUsers.splice(inAll, 1);
+    toast(name + ' left');
+  }
+  if (wasInPlayers >= 0) {
+    S.players.splice(wasInPlayers, 1);
+    // Adjust turn index
+    if (S.turnIdx >= S.players.length) S.turnIdx = 0;
+    S.canFlip = S.myUid === S.players[S.turnIdx]?.uid;
+    // If we are the new first player after host left, we become host
+    if (!S.isHost && S.players[0]?.uid === S.myUid) {
+      S.isHost = true;
+      toast('⚠️ Host left — you are now the host');
+      rtmDot('connected');
+    }
+    updateTurnBanner();
+  } else {
+    S.spectators = S.spectators.filter(p => p.uid !== uid);
+  }
+  updatePlayersList(); updateScores();
+  if (S.isHost) refreshWaitingList();
 }
 
-// ══════════════════════════════════════════════════════
-//  END / RESET
-// ══════════════════════════════════════════════════════
-function endGame() {
+// ══════════════════════════════════════════════════════════════════
+//  END GAME / RESET
+// ══════════════════════════════════════════════════════════════════
+function endGame(scores) {
   clearInterval(S.timerInterval);
-  const sorted=Object.entries(S.scores).sort((a,b)=>b[1].pairs-a[1].pairs);
-  const ov=document.createElement('div');
-  ov.className='fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center fade-in';
-  ov.innerHTML=`<div class="bg-surface-container border border-outline-variant rounded-2xl p-8 max-w-sm w-full mx-4 text-center slide-up">
-    <div class="text-5xl mb-4">🏆</div>
-    <h2 class="font-headline font-black text-2xl text-tertiary uppercase mb-1">Game Over!</h2>
-    <p class="text-on-surface-variant text-sm mb-6">All pairs found</p>
-    <div class="space-y-2 mb-6">
-      ${sorted.slice(0,5).map((e,i)=>`<div class="flex justify-between items-center px-4 py-2 rounded-xl ${i===0?'bg-tertiary-container text-on-tertiary':'bg-surface-container-high text-on-surface'}"><span class="font-bold text-sm">${['🥇','🥈','🥉','4.','5.'][i]} ${e[1].name}</span><span class="font-black text-sm">${e[1].pairs} pairs</span></div>`).join('')}
-    </div>
-    ${S.isHost?`<button onclick="this.closest('.fixed').remove();hostReset();" class="w-full py-3 bg-gradient-to-r from-primary to-primary-container text-on-primary font-black rounded-xl uppercase tracking-wider text-sm">Play Again</button>`:'<p class="text-on-surface-variant text-sm">Waiting for host to restart…</p>'}
-  </div>`;
+  if (scores) S.scores = scores; // sync from host's authoritative scores
+  const sorted = Object.entries(S.scores).sort((a, b) => b[1].pairs - a[1].pairs);
+  const ov = document.createElement('div');
+  ov.className = 'fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center fade-in';
+  ov.innerHTML = `
+    <div class="bg-surface-container border border-outline-variant rounded-2xl p-8 max-w-sm w-full mx-4 text-center slide-up">
+      <div class="text-5xl mb-3">🏆</div>
+      <h2 class="font-headline font-black text-2xl text-tertiary uppercase mb-1">Game Over!</h2>
+      <p class="text-on-surface-variant text-sm mb-5">All pairs found</p>
+      <div class="space-y-2 mb-6">
+        ${sorted.slice(0,5).map((e,i) => `
+          <div class="flex justify-between items-center px-4 py-2 rounded-xl ${i===0?'bg-tertiary-container text-on-tertiary':'bg-surface-container-high text-on-surface'}">
+            <span class="font-bold text-sm">${['🥇','🥈','🥉','4.','5.'][i]} ${e[1].name}</span>
+            <span class="font-black text-sm">${e[1].pairs} pairs</span>
+          </div>`).join('')}
+      </div>
+      ${S.isHost
+        ? `<button onclick="this.closest('.fixed').remove();hostReset();"
+            class="w-full py-3 bg-gradient-to-r from-primary to-primary-container text-on-primary font-black rounded-xl uppercase tracking-wider text-sm">Play Again</button>`
+        : `<p class="text-on-surface-variant text-sm">Waiting for host to restart…</p>`}
+    </div>`;
   document.body.appendChild(ov);
 }
 
 function hostReset() {
-  if(!S.isHost) return;
-  S.boardSeed=Date.now()&0xFFFFFF;
-  Object.keys(S.scores).forEach(u=>S.scores[u].pairs=0);
-  S.currentTurnIdx=0;
+  if (!S.isHost) return;
+  clearTimeout(S.noMatchTimer); S.noMatchTimer = null; // fix #4
+  S.boardSeed = Date.now();
+  Object.keys(S.scores).forEach(u => S.scores[u].pairs = 0);
+  S.turnIdx = 0; S.flipped = []; S.flipLock = false;
   buildBoard(); renderBoard();
   updateScores(); updateTurnBanner(); updateHeaderScore();
   startTimer();
-  broadcast({type:'RESET',seed:S.boardSeed});
+  broadcast({ type:'RESET', seed:S.boardSeed, players:S.players, spectators:S.spectators });
 }
 
-// ══════════════════════════════════════════════════════
-//  HELPERS
-// ══════════════════════════════════════════════════════
-const g=id=>document.getElementById(id);
-
-function addParticipant(uid,name,isPlaceholder,isSpectator) {
-  if(!S.participants.find(p=>p.uid===uid)) S.participants.push({uid,name,isPlaceholder,isSpectator});
+function applyReset(m) {
+  clearTimeout(S.noMatchTimer); S.noMatchTimer = null; // fix #4
+  S.boardSeed = m.seed;
+  if (m.players) S.players = m.players;
+  if (m.spectators) S.spectators = m.spectators;
+  Object.keys(S.scores).forEach(u => S.scores[u].pairs = 0);
+  S.turnIdx = 0; S.flipped = []; S.flipLock = false;
+  buildBoard(); renderBoard();
+  S.canFlip = S.myUid === S.players[0]?.uid;
+  updateScores(); updateTurnBanner(); updateHeaderScore();
+  startTimer();
 }
-function initScore(uid,name) { if(!S.scores[uid]) S.scores[uid]={name,pairs:0}; }
 
+// ══════════════════════════════════════════════════════════════════
+//  UI UPDATES
+// ══════════════════════════════════════════════════════════════════
 function updateTurnBanner() {
-  const ban=g('turn-banner'),tt=g('turn-text'),ts=g('turn-sub');
-  if(!ban) return;
-  if(!S.participants.length){ tt.textContent='Waiting for players…'; ts.textContent='Invite friends to start'; return; }
-  const cur=S.participants[S.currentTurnIdx]; if(!cur) return;
-  const me=cur.uid===S.myUid;
-  tt.textContent=me?'⚡ YOUR TURN':cur.name.toUpperCase()+"'S TURN";
-  ts.textContent=me?'Click two cards to find a match!':'Watch and wait…';
-  ban.className='mb-3 rounded-xl px-5 py-3 '+(me?'turn-pulse bg-tertiary-container text-on-tertiary':'bg-surface-container text-on-surface-variant')+' flex items-center justify-between flex-shrink-0';
+  const ban = g('turn-banner'), tt = g('turn-text'), ts = g('turn-sub');
+  if (!ban) return;
+  if (!S.gameStarted) {
+    tt.textContent = 'Waiting for host…'; ts.textContent = 'Game will start soon';
+    ban.className = 'mb-3 rounded-xl px-4 py-2.5 flex items-center justify-between bg-surface-container text-on-surface-variant flex-shrink-0';
+    return;
+  }
+  if (!S.players.length) { tt.textContent = 'No players'; ts.textContent = '—'; return; }
+  const cur = S.players[S.turnIdx];
+  if (!cur) return;
+  const me = cur.uid === S.myUid;
+  tt.textContent = me ? '⚡ YOUR TURN' : cur.name.toUpperCase() + "'S TURN";
+  ts.textContent = me ? 'Click two cards to find a match!' : 'Watch and wait…';
+  ban.className = 'mb-3 rounded-xl px-4 py-2.5 flex items-center justify-between flex-shrink-0 '
+    + (me ? 'turn-pulse bg-tertiary-container text-on-tertiary' : 'bg-surface-container text-on-surface-variant');
 }
 
 function updateCardsLeft() {
-  const rem=S.cards.filter(c=>!c.matched).length/2, tot=S.cards.length/2;
-  const el=g('cards-left'); if(el) el.textContent=rem+'/'+tot+' pairs left';
+  const rem = S.cards.filter(c => !c.matched).length / 2;
+  const tot = S.cards.length / 2;
+  const el = g('cards-left');
+  if (el) el.textContent = rem + '/' + tot + ' pairs left';
 }
 
 function updateScores() {
-  const panel=g('sp-scores'); if(!panel) return;
-  const sorted=Object.entries(S.scores).sort((a,b)=>b[1].pairs-a[1].pairs);
-  panel.innerHTML=sorted.map((e,i)=>{
-    const me=e[0]===S.myUid, cur=S.participants[S.currentTurnIdx]?.uid===e[0];
-    return `<div class="flex items-center justify-between px-3 py-2.5 rounded-xl ${me?'bg-primary/10 border border-primary/20':'hover:bg-surface-container-high'} transition-colors">
+  const panel = g('sp-scores');
+  if (!panel) return;
+  const sorted = Object.entries(S.scores).sort((a, b) => b[1].pairs - a[1].pairs);
+  panel.innerHTML = sorted.map((e, i) => {
+    const me  = e[0] === S.myUid;
+    const cur = S.players[S.turnIdx]?.uid === e[0];
+    return `<div class="flex items-center justify-between px-3 py-2.5 rounded-xl ${me ? 'bg-primary/10 border border-primary/20' : 'hover:bg-surface-container-high'} transition-colors">
       <div class="flex items-center gap-2.5">
-        <div class="w-6 h-6 rounded-full ${me?'bg-primary text-on-primary':'bg-surface-container-highest text-on-surface-variant'} flex items-center justify-center text-[10px] font-black">${i+1}</div>
-        <div><div class="text-xs font-bold ${me?'text-primary':'text-on-surface'}">${e[1].name}${me?' (You)':''}</div>${cur?'<div class="text-[9px] text-tertiary font-bold">● PLAYING</div>':''}</div>
+        <div class="w-6 h-6 rounded-full ${me ? 'bg-primary text-on-primary' : 'bg-surface-container-highest text-on-surface-variant'} flex items-center justify-center text-[10px] font-black">${i+1}</div>
+        <div>
+          <div class="text-xs font-bold ${me ? 'text-primary' : 'text-on-surface'}">${e[1].name}${me ? ' (You)' : ''}</div>
+          ${cur ? '<div class="text-[9px] text-tertiary font-bold">● PLAYING</div>' : ''}
+        </div>
       </div>
-      <span class="text-xs font-black ${me?'text-primary':'text-on-surface-variant'}">${e[1].pairs}</span>
+      <span class="text-xs font-black ${me ? 'text-primary' : 'text-on-surface-variant'}">${e[1].pairs}</span>
     </div>`;
   }).join('');
 }
 
-function updatePlayers() {
-  const panel=g('sp-players'); if(!panel) return;
-  panel.innerHTML=S.participants.map(p=>`
+function updatePlayersList() {
+  const panel = g('sp-players');
+  if (!panel) return;
+  panel.innerHTML = S.allUsers.map(u => `
     <div class="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-surface-container-high transition-colors">
-      <div class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center text-xs text-on-surface-variant font-bold flex-shrink-0">${p.name.slice(0,2).toUpperCase()}</div>
+      <div class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center text-xs text-on-surface-variant font-bold flex-shrink-0">${u.name.slice(0,2).toUpperCase()}</div>
       <div class="flex-1 min-w-0">
-        <div class="text-xs font-bold text-on-surface truncate">${p.name}${p.uid===S.myUid?' (You)':''}</div>
-        <div class="text-[9px] text-on-surface-variant uppercase tracking-wider">${p.isSpectator?'👁 Spectator':p.isPlaceholder?'📷 Placeholder':'🎥 Player'}</div>
+        <div class="text-xs font-bold text-on-surface truncate">${u.name}${u.uid===S.myUid?' (You)':''}</div>
+        <div class="text-[9px] text-on-surface-variant uppercase tracking-wider">${u.isSpectator ? '👁 Spectator' : '🎥 Player'}</div>
       </div>
     </div>`).join('');
 }
 
 function updateHeaderScore() {
-  const my=S.scores[S.myUid],el=g('header-score');
-  if(my&&el) el.textContent='Score: '+my.pairs;
+  const my = S.scores[S.myUid];
+  const el = g('header-score');
+  if (my && el) el.textContent = my.pairs + ' pairs';
 }
+
 function bumpScore() {
-  const el=g('header-score');
-  if(el){el.classList.remove('bump');void el.offsetWidth;el.classList.add('bump');}
   updateHeaderScore();
-  setTimeout(()=>el?.classList.remove('bump'),300);
+  const el = g('header-score');
+  if (el) { el.classList.remove('score-bump'); void el.offsetWidth; el.classList.add('score-bump'); }
+  setTimeout(() => g('header-score')?.classList.remove('score-bump'), 320);
 }
-function showSidePanel(p) {
-  g('sp-scores').classList.toggle('hidden',p!=='scores');
-  g('sp-players').classList.toggle('hidden',p!=='players');
-  g('sp-scores-btn').className=p==='scores'?'flex-1 py-2.5 text-xs font-bold uppercase tracking-widest text-primary border-b-2 border-primary':'flex-1 py-2.5 text-xs font-bold uppercase tracking-widest text-on-surface-variant';
-  g('sp-players-btn').className=p==='players'?'flex-1 py-2.5 text-xs font-bold uppercase tracking-widest text-primary border-b-2 border-primary':'flex-1 py-2.5 text-xs font-bold uppercase tracking-widest text-on-surface-variant';
+
+function showPanel(p) {
+  g('sp-scores').classList.toggle('hidden', p !== 'scores');
+  g('sp-players').classList.toggle('hidden', p !== 'players');
+  const on  = 'flex-1 py-2.5 text-xs font-bold uppercase tracking-widest text-primary border-b-2 border-primary';
+  const off = 'flex-1 py-2.5 text-xs font-bold uppercase tracking-widest text-on-surface-variant';
+  g('sp-s-btn').className = p === 'scores'  ? on : off;
+  g('sp-p-btn').className = p === 'players' ? on : off;
 }
-let sidebarOpen=true;
+
+let sidebarOpen = true;
 function toggleSidebar() {
-  sidebarOpen=!sidebarOpen;
-  const sb=g('sidebar'); sb.style.width=sidebarOpen?'':'0'; sb.style.overflow=sidebarOpen?'':'hidden';
-}
-function toast(msg) {
-  const t=g('toast'); t.textContent=msg; t.classList.add('show');
-  clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),3000);
-}
-function copyRoomCode() {
-  const url=new URL(window.location.href.split('?')[0]);
-  url.searchParams.set('room',S.channelName); url.searchParams.set('id',S.appId);
-  if(S.token) url.searchParams.set('t',S.token);
-  navigator.clipboard.writeText(url.toString()).then(()=>toast('Invite link copied!'));
-}
-function rtmDot(status) {
-  const d=g('rtm-dot'); if(d){d.className='';if(status)d.classList.add(status);d.title='RTM: '+status;}
+  sidebarOpen = !sidebarOpen;
+  const sb = g('sidebar');
+  sb.style.width    = sidebarOpen ? '' : '0';
+  sb.style.overflow = sidebarOpen ? '' : 'hidden';
 }
 
-// ══════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════
+//  SCREEN MANAGEMENT
+// ══════════════════════════════════════════════════════════════════
+function showScreen(name) {
+  g('lobby-screen').classList.toggle('hidden', name !== 'lobby');
+  g('waiting-screen').classList.toggle('hidden', name !== 'waiting');
+  g('game-screen').classList.toggle('hidden', name !== 'game');
+}
+
+// ══════════════════════════════════════════════════════════════════
 //  TIMER
-// ══════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════
 function startTimer() {
-  clearInterval(S.timerInterval); S.timerStart=Date.now();
-  S.timerInterval=setInterval(()=>{
-    const s=Math.floor((Date.now()-S.timerStart)/1000);
-    const el=g('header-timer');
-    if(el) el.textContent=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
-  },1000);
+  clearInterval(S.timerInterval);
+  S.timerStart = Date.now();
+  S.timerInterval = setInterval(() => {
+    const s = Math.floor((Date.now() - S.timerStart) / 1000);
+    const el = g('header-timer');
+    if (el) el.textContent = String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0');
+  }, 1000);
 }
 
-// ══════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════
 //  MEDIA CONTROLS
-// ══════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════
 async function toggleMic() {
-  S.micOn=!S.micOn;
-  if(S.localAudioTrack) await S.localAudioTrack.setEnabled(S.micOn);
-  g('mic-icon').textContent=S.micOn?'mic':'mic_off';
-  g('btn-mic').className=S.micOn?'flex flex-col items-center p-3 rounded-xl hover:bg-surface-container-high transition-all text-on-surface':'flex flex-col items-center p-3 rounded-xl bg-error/10 border border-error/30 transition-all text-error';
-  toast(S.micOn?'Microphone on':'Microphone off');
+  S.micOn = !S.micOn;
+  if (S.localAudio) await S.localAudio.setEnabled(S.micOn);
+  g('mic-icon').textContent = S.micOn ? 'mic' : 'mic_off';
+  g('btn-mic').className = S.micOn
+    ? 'flex flex-col items-center p-2.5 rounded-xl hover:bg-surface-container-high transition-all text-on-surface'
+    : 'flex flex-col items-center p-2.5 rounded-xl bg-error/10 border border-error/30 transition-all text-error';
+  toast(S.micOn ? 'Microphone on' : 'Microphone off');
 }
+
 async function toggleCamera() {
-  S.camOn=!S.camOn;
-  if(S.localVideoTrack) await S.localVideoTrack.setEnabled(S.camOn);
-  g('cam-icon').textContent=S.camOn?'videocam':'videocam_off';
-  g('btn-cam').className=S.camOn?'flex flex-col items-center p-3 rounded-xl hover:bg-surface-container-high transition-all text-on-surface':'flex flex-col items-center p-3 rounded-xl bg-error/10 border border-error/30 transition-all text-error';
-  toast(S.camOn?'Camera on':'Camera off');
+  S.camOn = !S.camOn;
+  if (S.localVideo) await S.localVideo.setEnabled(S.camOn);
+  g('cam-icon').textContent = S.camOn ? 'videocam' : 'videocam_off';
+  g('btn-cam').className = S.camOn
+    ? 'flex flex-col items-center p-2.5 rounded-xl hover:bg-surface-container-high transition-all text-on-surface'
+    : 'flex flex-col items-center p-2.5 rounded-xl bg-error/10 border border-error/30 transition-all text-error';
+  toast(S.camOn ? 'Camera on' : 'Camera off');
 }
+
+// ══════════════════════════════════════════════════════════════════
+//  LEAVE  (fix #13: clean up cloned tracks)
+// ══════════════════════════════════════════════════════════════════
 async function leaveRoom() {
   clearInterval(S.timerInterval);
-  if(S.localAudioTrack){S.localAudioTrack.close();S.localAudioTrack=null;}
-  if(S.localVideoTrack){S.localVideoTrack.close();S.localVideoTrack=null;}
-  if(S.rtmClient&&S.rtmChannelName){await S.rtmClient.unsubscribe(S.rtmChannelName).catch(()=>{});}
-  if(S.rtmClient){await S.rtmClient.logout().catch(()=>{});S.rtmClient=null;}
-  S.rtmChannelName='';
-  if(S.client){await S.client.leave().catch(()=>{});S.client=null;}
-  S.participants=[];S.remoteUsers={};S.cards=[];S.scores={};S.cardPositions=[];
-  g('game-screen').classList.add('hidden');
-  g('lobby-screen').classList.remove('hidden');
-  rtmDot('');toast('Left the room');
+  clearTimeout(S.noMatchTimer);
+
+  // Stop all cloned tracks still in the DOM (fix #13)
+  document.querySelectorAll('video').forEach(v => {
+    if (v._ct) try { v._ct.stop(); } catch(_) {}
+  });
+
+  if (S.localAudio)  { S.localAudio.close();  S.localAudio  = null; }
+  if (S.localVideo)  { S.localVideo.close();  S.localVideo  = null; }
+
+  if (S.rtmClient && S.rtmChannelName) {
+    await S.rtmClient.unsubscribe(S.rtmChannelName).catch(() => {});
+  }
+  if (S.rtmClient) {
+    await S.rtmClient.logout().catch(() => {});
+    S.rtmClient = null;
+    S.rtmChannelName = '';
+  }
+  if (S.rtcClient) {
+    await S.rtcClient.leave().catch(() => {});
+    S.rtcClient = null;
+  }
+
+  // Reset state
+  Object.assign(S, {
+    players:[], spectators:[], allUsers:[], remoteUsers:{},
+    cards:[], positions:[], scores:{}, flipped:[],
+    canFlip:false, flipLock:false, gameStarted:false, pendingIdx:-1,
+  });
+
+  showScreen('lobby');
+  rtmDot('');
+  toast('Left the room');
 }
 
-// ══════════════════════════════════════════════════════
-//  CHAT (broadcast via RTM)
-// ══════════════════════════════════════════════════════
-let chatOpen=false;
-function toggleChat(){chatOpen=!chatOpen;g('chat-panel').classList.toggle('open',chatOpen);}
-function sendChat(){
-  const input=g('chat-input'),msg=input.value.trim(); if(!msg) return;
-  input.value=''; appendChat(S.userName,msg,true);
-  broadcast({type:'CHAT',uid:S.myUid,name:S.userName,text:msg});
+// ══════════════════════════════════════════════════════════════════
+//  CHAT
+// ══════════════════════════════════════════════════════════════════
+let chatOpen = false;
+function toggleChat() {
+  chatOpen = !chatOpen;
+  g('chat-panel').classList.toggle('open', chatOpen);
 }
-function appendChat(sender,text,isMe){
-  const c=g('chat-messages'),d=document.createElement('div');
-  d.className='flex flex-col '+(isMe?'items-end':'items-start');
-  d.innerHTML=`<span class="text-[9px] text-on-surface-variant mb-0.5 font-bold uppercase tracking-wider">${sender}</span><div class="px-3 py-1.5 rounded-xl text-xs max-w-[80%] ${isMe?'bg-primary text-on-primary':'bg-surface-container-high text-on-surface'}">${esc(text)}</div>`;
-  c.appendChild(d); c.scrollTop=c.scrollHeight;
+
+function sendChat() {
+  const input = g('chat-input');
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+  appendChat(S.userName, msg, true);
+  broadcast({ type:'CHAT', uid:S.myUid, name:S.userName, text:msg });
 }
-function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
-// ══════════════════════════════════════════════════════
-//  RESIZE
-// ══════════════════════════════════════════════════════
-let rsz;
-window.addEventListener('resize',()=>{ clearTimeout(rsz); rsz=setTimeout(()=>{ if(S.cards.length){computeHive();renderBoard();} },220); });
-window.onbeforeunload=()=>{ if(S.client) return 'Leave the game?'; };
+function appendChat(sender, text, isMe) {
+  const c = g('chat-messages');
+  const d = document.createElement('div');
+  d.className = 'flex flex-col ' + (isMe ? 'items-end' : 'items-start');
+  d.innerHTML = `<span class="text-[9px] text-on-surface-variant mb-0.5 font-bold uppercase tracking-wider">${sender}</span>
+    <div class="px-3 py-1.5 rounded-xl text-xs max-w-[80%] ${isMe ? 'bg-primary text-on-primary' : 'bg-surface-container-high text-on-surface'}">${esc(text)}</div>`;
+  c.appendChild(d);
+  c.scrollTop = c.scrollHeight;
+}
 
-// ══════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════
+//  UTILS
+// ══════════════════════════════════════════════════════════════════
+const g = id => document.getElementById(id);
+function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function toast(msg) {
+  const t = g('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._t);
+  t._t = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+function rtmDot(status) {
+  const d = g('rtm-dot');
+  if (d) { d.className = ''; if (status) d.classList.add(status); d.title = 'RTM: ' + status; }
+}
+
+function copyInvite() {
+  const url = new URL(window.location.href.split('?')[0]);
+  url.searchParams.set('room', S.channelName);
+  url.searchParams.set('id', S.appId);
+  if (S.token) url.searchParams.set('t', S.token);
+  navigator.clipboard.writeText(url.toString()).then(() => toast('Invite link copied!'));
+}
+
+window.onbeforeunload = () => { if (S.rtcClient) return 'Leave the game?'; };
+
+// ══════════════════════════════════════════════════════════════════
 //  URL PARAM PREFILL
-// ══════════════════════════════════════════════════════
-(function(){
-  const p=new URLSearchParams(window.location.search);
-  const room=p.get('room'),appId=p.get('id'),token=p.get('t');
-  if(!room&&!appId) return;
+// ══════════════════════════════════════════════════════════════════
+(function () {
+  const p = new URLSearchParams(window.location.search);
+  const room = p.get('room'), appId = p.get('id'), token = p.get('t');
+  if (!room && !appId) return;
   setTab('join');
-  if(room){const e=g('join-room');if(e)e.value=room.toUpperCase();}
-  if(appId){const e=g('join-appid');if(e)e.value=appId;}
-  if(token){const e=g('join-token');if(e)e.value=token;}
-  const ne=g('join-name');
-  if(ne){ne.focus();ne.placeholder='Enter your display name to join';ne.classList.add('border-tertiary');}
-  const ban=document.createElement('div');
-  ban.className='mb-4 px-4 py-3 rounded-xl bg-tertiary-container/30 border border-tertiary/40 text-on-tertiary text-xs font-bold text-center fade-in';
-  ban.textContent='⚡ You were invited to '+(room||'a room')+' — just enter your name and join!';
-  const fj=g('form-join'); if(fj) fj.insertBefore(ban,fj.firstChild);
+  if (room)  { const e = g('join-room');  if (e) e.value = room.toUpperCase(); }
+  if (appId) { const e = g('join-appid'); if (e) e.value = appId; }
+  if (token) { const e = g('join-token'); if (e) e.value = token; }
+  const ne = g('join-name');
+  if (ne) { ne.focus(); ne.placeholder = 'Enter your display name to join'; ne.classList.add('border-tertiary'); }
+  const ban = document.createElement('div');
+  ban.className = 'mb-4 px-4 py-2.5 rounded-xl bg-tertiary-container/30 border border-tertiary/40 text-on-tertiary text-xs font-bold text-center fade-in';
+  ban.textContent = '🐝 You were invited to ' + (room || 'a room') + ' — enter your name to join!';
+  const fj = g('form-join');
+  if (fj) fj.insertBefore(ban, fj.firstChild);
 })();
 </script>
 </body>
