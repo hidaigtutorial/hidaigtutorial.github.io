@@ -59,6 +59,10 @@ body{font-family:'Space Grotesk',sans-serif}
 .card-pending .card-front{border-color:rgba(255,228,132,0.6);animation:pendingPulse 0.6s ease infinite alternate}
 @keyframes pendingPulse{from{box-shadow:none}to{box-shadow:0 0 10px rgba(255,228,132,0.35)}}
 
+/* ── Turn timer countdown bar (change #3) ── */
+#turn-countdown{height:3px;background:rgba(253,212,4,0.2);border-radius:9999px;overflow:hidden;margin-top:3px;width:100%}
+#turn-countdown-bar{height:100%;background:#fdd404;width:100%}
+
 /* ── Turn banner ── */
 .turn-pulse{animation:pulseGlow 2s ease-in-out infinite}
 @keyframes pulseGlow{0%,100%{box-shadow:0 0 6px rgba(253,212,4,0.2)}50%{box-shadow:0 0 22px rgba(253,212,4,0.55),0 0 44px rgba(253,212,4,0.15)}}
@@ -258,7 +262,7 @@ body{font-family:'Space Grotesk',sans-serif}
     <section class="flex-1 flex flex-col overflow-hidden px-4 py-3">
 
       <!-- Turn banner -->
-      <div id="turn-banner" class="mb-3 rounded-xl px-4 py-2.5 flex items-center justify-between bg-tertiary-container text-on-tertiary flex-shrink-0 turn-pulse">
+      <div id="turn-banner" class="mb-3 rounded-xl px-4 py-2.5 flex flex-wrap items-center justify-between bg-tertiary-container text-on-tertiary flex-shrink-0 turn-pulse">
         <div class="flex items-center gap-2.5">
           <span class="material-symbols-outlined ms-fill text-xl">stars</span>
           <div>
@@ -267,6 +271,9 @@ body{font-family:'Space Grotesk',sans-serif}
           </div>
         </div>
         <div id="cards-left" class="text-xs font-bold opacity-70"></div>
+      </div>
+      <div id="turn-countdown" class="hidden w-full px-1 pb-1">
+        <div id="turn-countdown-bar"></div>
       </div>
 
       <!-- Hive board -->
@@ -380,7 +387,7 @@ const S = {
   scores:{},       // uid -> {name, pairs}
   canFlip:false,
   flipLock:false,
-  noMatchTimer:null,
+  noMatchTimer:null, turnTimer:null,
 
   // Timer
   timerStart:null, timerInterval:null,
@@ -563,6 +570,7 @@ function hostStartGame() {
   });
   renderBoard();
   updateTurnBanner(); updateScores(); updatePlayersList();
+  hostStartTurnTimer();
 }
 
 function cancelWaiting() {
@@ -706,6 +714,11 @@ function onMsg(m, from) {
     case 'RESET': {
       if (S.isHost) break;
       applyReset(m);
+      break;
+    }
+
+    case 'TURN_SKIP': {
+      if (!S.isHost) applyTurnSkip(m.next);
       break;
     }
 
@@ -1008,6 +1021,11 @@ function hostFlip(idx) {
 function applyFlip(idx) {
   const card = S.cards[idx];
   if (!card || card.matched) return;
+  // First flip cancels the turn timer and countdown bar (change #3)
+  if (S.flipped.length === 0) {
+    stopCountdown();
+    if (S.isHost) { clearTimeout(S.turnTimer); S.turnTimer = null; }
+  }
   card.flipped = true;
   S.flipped.push(idx);
 
@@ -1028,6 +1046,31 @@ function applyFlip(idx) {
       setTimeout(() => hostCheckMatch(), 1100);
     }
   }
+}
+
+// ── Turn timer (change #3) ────────────────────────────────────────
+// Starts after each turn begins. If no first card flipped in 10s,
+// host advances the turn. Cancelled the moment first card is flipped.
+function hostStartTurnTimer() {
+  if (!S.isHost) return;
+  clearTimeout(S.turnTimer);
+  S.turnTimer = setTimeout(() => {
+    S.turnTimer = null;
+    if (!S.gameStarted || S.flipped.length > 0 || S.flipLock) return;
+    const next = (S.turnIdx + 1) % Math.max(S.players.length, 1);
+    toast('⏱ Turn skipped — too slow!');
+    broadcast({ type:'TURN_SKIP', next });
+    applyTurnSkip(next);
+  }, 10000);
+}
+
+function applyTurnSkip(next) {
+  S.flipped = []; S.flipLock = false;
+  S.turnIdx = next;
+  S.canFlip = S.myUid === S.players[next]?.uid;
+  updateTurnBanner();
+  startCountdown();
+  if (S.isHost) hostStartTurnTimer();
 }
 
 function hostCheckMatch() {
@@ -1072,6 +1115,7 @@ function applyMatch(i1, i2, scorerUid, next) {
 
   if (scorerUid === S.myUid) { bumpScore(); toast('✨ Match! +1 Pair'); }
   updateScores(); updateHeaderScore(); updateCardsLeft(); updateTurnBanner();
+  if (S.isHost && !S.cards.every(c => c.matched)) hostStartTurnTimer();
 }
 
 function applyNoMatch(i1, i2, next) {
@@ -1085,6 +1129,7 @@ function applyNoMatch(i1, i2, next) {
     S.turnIdx = next;
     S.canFlip = S.myUid === S.players[next]?.uid;
     updateTurnBanner();
+    if (S.isHost) hostStartTurnTimer();
   }, 750);
 }
 
@@ -1154,6 +1199,7 @@ function endGame(scores) {
   if (scores) S.scores = scores; // sync from host's authoritative scores
   const sorted = Object.entries(S.scores).sort((a, b) => b[1].pairs - a[1].pairs);
   const ov = document.createElement('div');
+  ov.id = 'game-over-overlay';
   ov.className = 'fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center fade-in';
   ov.innerHTML = `
     <div class="bg-surface-container border border-outline-variant rounded-2xl p-8 max-w-sm w-full mx-4 text-center slide-up">
@@ -1177,24 +1223,39 @@ function endGame(scores) {
 
 function hostReset() {
   if (!S.isHost) return;
-  clearTimeout(S.noMatchTimer); S.noMatchTimer = null; // fix #4
+  clearTimeout(S.noMatchTimer); S.noMatchTimer = null;
+  clearTimeout(S.turnTimer);    S.turnTimer    = null;
+
+  // Winner of last round starts next; preserve relative order after (change #2)
+  const sorted = Object.entries(S.scores).sort((a, b) => b[1].pairs - a[1].pairs);
+  const winnerUid = sorted[0]?.[0];
+  const winnerIdx = S.players.findIndex(p => p.uid === winnerUid);
+  if (winnerIdx > 0) {
+    S.players = [...S.players.slice(winnerIdx), ...S.players.slice(0, winnerIdx)];
+  }
+  S.turnIdx = 0;
+
   S.boardSeed = Date.now();
   Object.keys(S.scores).forEach(u => S.scores[u].pairs = 0);
-  S.turnIdx = 0; S.flipped = []; S.flipLock = false;
+  S.flipped = []; S.flipLock = false;
   buildBoard(); renderBoard();
+  document.getElementById('game-over-overlay')?.remove();
   updateScores(); updateTurnBanner(); updateHeaderScore();
   startTimer();
+  hostStartTurnTimer();
   broadcast({ type:'RESET', seed:S.boardSeed, players:S.players, spectators:S.spectators });
 }
 
 function applyReset(m) {
-  clearTimeout(S.noMatchTimer); S.noMatchTimer = null; // fix #4
+  clearTimeout(S.noMatchTimer); S.noMatchTimer = null;
+  clearTimeout(S.turnTimer);    S.turnTimer    = null;
   S.boardSeed = m.seed;
-  if (m.players) S.players = m.players;
+  if (m.players)    S.players    = m.players;    // already winner-rotated by host
   if (m.spectators) S.spectators = m.spectators;
   Object.keys(S.scores).forEach(u => S.scores[u].pairs = 0);
   S.turnIdx = 0; S.flipped = []; S.flipLock = false;
   buildBoard(); renderBoard();
+  document.getElementById('game-over-overlay')?.remove();
   S.canFlip = S.myUid === S.players[0]?.uid;
   updateScores(); updateTurnBanner(); updateHeaderScore();
   startTimer();
@@ -1217,8 +1278,9 @@ function updateTurnBanner() {
   const me = cur.uid === S.myUid;
   tt.textContent = me ? '⚡ YOUR TURN' : cur.name.toUpperCase() + "'S TURN";
   ts.textContent = me ? 'Click two cards to find a match!' : 'Watch and wait…';
-  ban.className = 'mb-3 rounded-xl px-4 py-2.5 flex items-center justify-between flex-shrink-0 '
+  ban.className = 'mb-3 rounded-xl px-4 py-2.5 flex flex-wrap items-center justify-between flex-shrink-0 '
     + (me ? 'turn-pulse bg-tertiary-container text-on-tertiary' : 'bg-surface-container text-on-surface-variant');
+  startCountdown();
 }
 
 function updateCardsLeft() {
@@ -1336,12 +1398,40 @@ async function toggleCamera() {
   toast(S.camOn ? 'Camera on' : 'Camera off');
 }
 
+// ── Visual countdown bar (runs on all clients) ───────────────────────
+let _cdTimer = null;
+function startCountdown() {
+  stopCountdown();
+  const bar = document.getElementById('turn-countdown-bar');
+  const wrap = document.getElementById('turn-countdown');
+  if (!bar || !wrap) return;
+  wrap.classList.remove('hidden');
+  bar.style.transition = 'none';
+  bar.style.width = '100%';
+  void bar.offsetWidth;
+  // Animate to 0% over 10 seconds
+  requestAnimationFrame(() => {
+    bar.style.transition = 'width 10s linear';
+    bar.style.width = '0%';
+  });
+  _cdTimer = setTimeout(() => stopCountdown(), 10200);
+}
+function stopCountdown() {
+  clearTimeout(_cdTimer); _cdTimer = null;
+  const bar = document.getElementById('turn-countdown-bar');
+  const wrap = document.getElementById('turn-countdown');
+  if (bar) { bar.style.transition = 'none'; bar.style.width = '100%'; }
+  if (wrap) wrap.classList.add('hidden');
+}
+
 // ══════════════════════════════════════════════════════════════════
 //  LEAVE  (fix #13: clean up cloned tracks)
 // ══════════════════════════════════════════════════════════════════
 async function leaveRoom() {
   clearInterval(S.timerInterval);
   clearTimeout(S.noMatchTimer);
+  clearTimeout(S.turnTimer); S.turnTimer = null;
+  stopCountdown();
 
   // Stop all cloned tracks still in the DOM (fix #13)
   document.querySelectorAll('video').forEach(v => {
